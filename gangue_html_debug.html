@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <link rel="manifest" href="/static/site.webmanifest">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=Shantell+Sans&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@2.0.0"></script>
+
+    <style>
+        :root {
+            --pico-font-family: "Shantell Sans", cursive;
+            --pico-background-color: #4D36B6;
+            --pico-primary: #A6EC0B;
+            --pico-primary-background: #A6EC0B;
+            --pico-primary-inverse: #4400ad;
+            --pico-primary-hover-background: #79c0ff;
+            --pico-muted-color: #ADA2DD;
+            --pico-mark-background-color: #4400ad;
+            --pico-h1-color: #FFFFFF;
+            --pico-h2-color: #c2bbff;
+            --pico-h3-color: #c2bbff;
+            --pico-h4-color: #c2bbff;
+            --pico-h5-color: #c2bbff;
+            --pico-color: #ADA2DD;
+            --pico-table-row-stripped-background-color: #4400ad;
+            --pico-primary-underline: rgb(87 128 0);
+            --pico-font-weight: 300;
+            --pico-font-size: 1.125rem;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            --pico-font-family: "Bubblegum Sans", sans-serif;
+        }
+        article {
+            background-color: #3d2b91;
+        }
+    </style>
+    <style>
+        .video-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+        .video-container video { /* for videos in content */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .video-container iframe { /* for videos from youtube */
+            width: 100%;
+            aspect-ratio: 16/9;
+        }
+    </style>
+    
+    <title>Dashboard</title>
+</head>
+<body>
+    <div style="margin: auto; max-width: 900px; padding: 15px;">
+        <div class="container-fluid">
+            
+            <nav>
+                <ul>
+                    <li><a href="/home/" class="contrast"><span class="emoji" data-tooltip="Home" data-placement="bottom">🏠</span><span class="text">Home</span></a></li>
+                    <li><a href="/educacao/" class=""><span class="emoji" data-tooltip="Educação" data-placement="bottom">📚</span><span class="text">Educação</span></a></li>
+                    <li><a href="/alphas/" class=""><span class="emoji" data-tooltip="Alphas" data-placement="bottom">🧒</span><span class="text">Alphas</span></a></li>
+                    <li><a href="/clube/" class=""><span class="emoji" data-tooltip="Clube" data-placement="bottom">🎭</span><span class="text">Clube</span></a></li>
+                    <li><a href="/ferramentas/" class=""><span class="emoji" data-tooltip="Ferramentas" data-placement="bottom">🛠️</span><span class="text">Ferramentas</span></a></li>
+                    <li><a href="/pesquisa/" class=""><span class="emoji" data-tooltip="Pesquisa" data-placement="bottom">🔍</span><span class="text">Pesquisa</span></a></li>
+                </ul>
+                <style>
+                    @media (min-width: 901px) {
+                        .emoji { display: none; }
+                    }
+                    @media (max-width: 900px) {
+                        .text { display: none; }
+                    }
+                </style>
+                <ul>
+                    <li><a href="/logout">Sair</a></li>
+                </ul>
+            </nav>
+            
+        </div>
+        <div class="container-fluid">
+            
+<h1>🎉</h1>
+<hgroup>
+    <h3>Bom te ver, Executer!</h3>
+    <p>A Gangue do Macaco é tua comunidade!</p>
+</hgroup>
+
+        </div>
+    </div>
+</body>
+</html>

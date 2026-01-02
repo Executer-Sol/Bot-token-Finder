@@ -1,0 +1,7 @@
+{
+  "graficos": true,
+  "notificacoes": false,
+  "trailing": true,
+  "analise": false,
+  "health": true
+}

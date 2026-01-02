@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>Trading Bot - Solana Jupiter</title>
+    <link rel="stylesheet" href="/static/css/trading-ui.css">
+    <style>
+        /* CSS crítico inline para carregamento inicial */
+        body {
+            margin: 0;
+            padding-top: 80px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0e27;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #0a0e27;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .loading-overlay.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="initialLoader">
+        <div style="text-align: center;">
+            <div style="width: 50px; height: 50px; margin: 0 auto 20px; border: 4px solid rgba(37, 99, 235, 0.3); border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <h2 style="margin: 0; font-weight: 600;">Carregando Dashboard...</h2>
+        </div>
+    </div>
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+
+    <!-- Header Fixo -->
+    <header class="trading-header">
+        <div class="header-left">
+            <div class="header-logo">⚡ Trading Bot</div>
+            <div class="wallet-info">
+                <div class="wallet-address" id="walletAddressDisplay">Carregando...</div>
+                <div class="wallet-balance">
+                    <span class="balance-sol" id="walletBalanceSOL">0.00 SOL</span>
+                    <span class="balance-usd" id="walletBalanceUSD">($0.00)</span>
+                </div>
+            </div>
+            <div class="mode-badge real" id="modeBadge">REAL</div>
+        </div>
+        <div class="header-right">
+            <button class="btn btn-secondary" onclick="loadData()">🔄 Atualizar</button>
+            <button class="btn btn-secondary" onclick="toggleDarkMode()" id="darkModeBtn">🌙</button>
+        </div>
+    </header>
+
+    <!-- Container Principal -->
+    <div class="trading-container">
+        <!-- Fluxo em 3 Passos -->
+        <div class="trading-flow">
+            <div class="flow-step active" id="step1">
+                <div class="flow-step-number">1</div>
+                <div class="flow-step-title">Selecionar Token e Valor</div>
+                <div class="flow-step-content">
+                    <div class="form-group">
+                        <label class="form-label">Contract Address</label>
+                        <input type="text" class="form-input" id="tokenAddress" placeholder="Cole a CA do token">
+                        <button class="btn btn-secondary mt-sm" onclick="pasteFromLastToken()" style="width: 100%;">📋 Usar Último Token</button>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Quantidade em SOL</label>
+                        <input type="number" class="form-input" id="amountSOL" placeholder="0.05" step="0.01" min="0.01">
+                    </div>
+                    <button class="btn btn-primary" onclick="getQuote()" style="width: 100%;">📊 Obter Cotação</button>
+                </div>
+            </div>
+
+            <div class="flow-step" id="step2">
+                <div class="flow-step-number">2</div>
+                <div class="flow-step-title">Visualizar Cotação e Riscos</div>
+                <div class="flow-step-content" id="quoteContent">
+                    <div style="text-align: center; color: var(--text-tertiary); padding: 40px 0;">
+                        Aguardando cotação...
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-step" id="step3">
+                <div class="flow-step-number">3</div>
+                <div class="flow-step-title">Confirmar Transação</div>
+                <div class="flow-step-content" id="confirmContent">
+                    <div style="text-align: center; color: var(--text-tertiary); padding: 40px 0;">
+                        Aguardando confirmação...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards Principais -->
+        <div class="trading-cards">
+            <!-- Card de Cotação -->
+            <div class="trading-card quote-card" id="quoteCard" style="display: none;">
+                <div class="card-header">
+                    <div class="card-title">💰 Cotação</div>
+                </div>
+                <div class="card-content">
+                    <div class="quote-price" id="quotePrice">$0.00</div>
+                    <div class="quote-details">
+                        <div class="quote-detail-item">
+                            <div class="quote-detail-label">Quantidade Estimada</div>
+                            <div class="quote-detail-value" id="quoteAmount">0 tokens</div>
+                        </div>
+                        <div class="quote-detail-item">
+                            <div class="quote-detail-label">Slippage</div>
+                            <div class="quote-detail-value" id="quoteSlippage">1.0%</div>
+                        </div>
+                        <div class="quote-detail-item">
+                            <div class="quote-detail-label">Impacto no Preço</div>
+                            <div class="quote-detail-value" id="quoteImpact">0.0%</div>
+                        </div>
+                        <div class="quote-detail-item">
+                            <div class="quote-detail-label">Taxa Estimada</div>
+                            <div class="quote-detail-value" id="quoteFee">0.00 SOL</div>
+                        </div>
+                    </div>
+                    <div class="quick-actions mt-md">
+                        <button class="quick-action-btn" onclick="getQuote()">🔄 Re-cotar</button>
+                        <button class="quick-action-btn" onclick="increaseSlippage()">📈 Aumentar Slippage</button>
+                        <button class="quick-action-btn" onclick="sellInParts()">📦 Vender em Partes</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card de Risco -->
+            <div class="trading-card risk-card" id="riskCard" style="display: none;">
+                <div class="card-header">
+                    <div class="card-title">⚠️ Análise de Risco</div>
+                </div>
+                <div class="card-content" id="riskContent">
+                    <!-- Alertas de risco serão inseridos aqui -->
+                </div>
+            </div>
+
+            <!-- Card de Status da Transação -->
+            <div class="trading-card status-card" id="statusCard" style="display: none;">
+                <div class="card-header">
+                    <div class="card-title">📊 Status da Transação</div>
+                </div>
+                <div class="card-content">
+                    <div class="status-steps" id="statusSteps">
+                        <div class="status-step">
+                            <div class="status-step-icon">1</div>
+                            <div class="status-step-label">Cotando</div>
+                        </div>
+                        <div class="status-step">
+                            <div class="status-step-icon">2</div>
+                            <div class="status-step-label">Assinando</div>
+                        </div>
+                        <div class="status-step">
+                            <div class="status-step-icon">3</div>
+                            <div class="status-step-label">Enviando</div>
+                        </div>
+                        <div class="status-step">
+                            <div class="status-step-icon">4</div>
+                            <div class="status-step-label">Confirmando</div>
+                        </div>
+                        <div class="status-step">
+                            <div class="status-step-icon">5</div>
+                            <div class="status-step-label">Concluído</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Histórico de Transações -->
+        <div class="history-section">
+            <div class="history-header">
+                <h2 class="history-title">📜 Histórico de Transações</h2>
+                <button class="btn btn-secondary" onclick="loadHistory()">🔄 Atualizar</button>
+            </div>
+            <div class="history-table">
+                <div class="history-table-header">
+                    <div>Token</div>
+                    <div>Tipo</div>
+                    <div>Valor</div>
+                    <div>Preço Médio</div>
+                    <div>Status</div>
+                    <div>Ações</div>
+                </div>
+                <div id="historyRows">
+                    <div style="padding: 24px; text-align: center; color: var(--text-tertiary);">
+                        Carregando histórico...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensagens de Alerta -->
+    <div id="alertContainer" style="position: fixed; top: 100px; right: 24px; z-index: 10000; max-width: 400px;"></div>
+
+    <script>
+        // Estado global
+        let currentQuote = null;
+        let currentSlippage = 1.0;
+        let walletAddress = '';
+        let walletBalance = 0;
+        let solPriceUSD = 150;
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadInitialData();
+            hideLoadingOverlay();
+            setInterval(loadWalletBalance, 30000); // Atualiza saldo a cada 30s
+        });
+
+        function hideLoadingOverlay() {
+            document.getElementById('initialLoader').classList.add('hidden');
+        }
+
+        async function loadInitialData() {
+            try {
+                await Promise.all([
+                    loadWalletBalance(),
+                    loadHistory(),
+                    loadSOLPrice()
+                ]);
+            } catch (error) {
+                showAlert('Erro ao carregar dados iniciais', 'error');
+            }
+        }
+
+        async function loadWalletBalance() {
+            try {
+                const response = await fetch('/api/wallet-balance');
+                const data = await response.json();
+                
+                walletBalance = data.sol_balance || 0;
+                walletAddress = data.wallet_address || '';
+                
+                document.getElementById('walletBalanceSOL').textContent = `${walletBalance.toFixed(4)} SOL`;
+                document.getElementById('walletBalanceUSD').textContent = `($${(walletBalance * solPriceUSD).toFixed(2)})`;
+                document.getElementById('walletAddressDisplay').textContent = 
+                    walletAddress ? `${walletAddress.substring(0, 8)}...${walletAddress.substring(walletAddress.length - 8)}` : 'Não conectado';
+            } catch (error) {
+                console.error('Erro ao carregar saldo:', error);
+            }
+        }
+
+        async function loadSOLPrice() {
+            try {
+                const response = await fetch('/api/sol-price');
+                const data = await response.json();
+                solPriceUSD = data.price || 150;
+            } catch (error) {
+                console.error('Erro ao carregar preço SOL:', error);
+            }
+        }
+
+        async function getQuote() {
+            const tokenAddress = document.getElementById('tokenAddress').value.trim();
+            const amountSOL = parseFloat(document.getElementById('amountSOL').value);
+
+            if (!tokenAddress) {
+                showAlert('Por favor, insira o Contract Address do token', 'warning');
+                return;
+            }
+
+            if (!amountSOL || amountSOL <= 0) {
+                showAlert('Por favor, insira uma quantidade válida em SOL', 'warning');
+                return;
+            }
+
+            try {
+                // Ativa step 2
+                document.getElementById('step2').classList.add('active');
+                
+                // Mostra card de cotação
+                document.getElementById('quoteCard').style.display = 'block';
+                document.getElementById('quoteCard').querySelector('.card-content').innerHTML = 
+                    '<div style="text-align: center; padding: 40px 0;">🔄 Obtendo cotação...</div>';
+
+                // Simula chamada à API (substituir por chamada real)
+                // const response = await fetch('/api/jupiter/quote', { ... });
+                
+                // Por enquanto, mostra exemplo
+                setTimeout(() => {
+                    currentQuote = {
+                        price: 0.000123,
+                        amount: 1000000,
+                        slippage: currentSlippage,
+                        impact: 0.5,
+                        fee: 0.001
+                    };
+                    displayQuote(currentQuote);
+                    analyzeRisk(currentQuote);
+                }, 1000);
+
+            } catch (error) {
+                showAlert('Erro ao obter cotação: ' + error.message, 'error');
+            }
+        }
+
+        function displayQuote(quote) {
+            document.getElementById('quotePrice').textContent = `$${quote.price.toFixed(8)}`;
+            document.getElementById('quoteAmount').textContent = `${quote.amount.toLocaleString()} tokens`;
+            document.getElementById('quoteSlippage').textContent = `${quote.slippage}%`;
+            document.getElementById('quoteImpact').textContent = `${quote.impact}%`;
+            document.getElementById('quoteFee').textContent = `${quote.fee.toFixed(4)} SOL`;
+        }
+
+        function analyzeRisk(quote) {
+            const riskContent = document.getElementById('riskContent');
+            riskContent.innerHTML = '';
+            
+            const risks = [];
+            
+            if (quote.impact > 5) {
+                risks.push({
+                    type: 'high',
+                    message: 'Alta volatilidade detectada. O preço pode variar significativamente.',
+                    suggestion: 'Considere reduzir a quantidade ou aumentar o slippage.'
+                });
+            }
+            
+            if (quote.slippage < 1) {
+                risks.push({
+                    type: 'warning',
+                    message: 'Slippage muito baixo. A transação pode falhar.',
+                    suggestion: 'Aumente o slippage para pelo menos 1%.'
+                });
+            }
+            
+            if (risks.length === 0) {
+                risks.push({
+                    type: 'low',
+                    message: 'Riscos dentro do esperado. Transação segura.',
+                    suggestion: ''
+                });
+            }
+
+            risks.forEach(risk => {
+                const alert = document.createElement('div');
+                alert.className = `risk-alert ${risk.type}`;
+                alert.innerHTML = `
+                    <div class="risk-icon">${risk.type === 'high' ? '⚠️' : risk.type === 'low' ? '✅' : '⚡'}</div>
+                    <div>
+                        <div class="risk-message">${risk.message}</div>
+                        ${risk.suggestion ? `<div class="alert-suggestion">💡 ${risk.suggestion}</div>` : ''}
+                    </div>
+                `;
+                riskContent.appendChild(alert);
+            });
+
+            document.getElementById('riskCard').style.display = 'block';
+        }
+
+        function increaseSlippage() {
+            currentSlippage = Math.min(currentSlippage + 0.5, 5.0);
+            document.getElementById('quoteSlippage').textContent = `${currentSlippage}%`;
+            if (currentQuote) {
+                currentQuote.slippage = currentSlippage;
+            }
+            showAlert(`Slippage aumentado para ${currentSlippage}%`, 'info');
+        }
+
+        function sellInParts() {
+            showAlert('Funcionalidade de venda em partes em desenvolvimento', 'info');
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/trades/sold');
+                const data = await response.json();
+                
+                const rowsContainer = document.getElementById('historyRows');
+                rowsContainer.innerHTML = '';
+
+                if (data.length === 0) {
+                    rowsContainer.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-tertiary);">Nenhuma transação encontrada</div>';
+                    return;
+                }
+
+                data.slice(0, 10).forEach(trade => {
+                    const row = document.createElement('div');
+                    row.className = 'history-row';
+                    row.innerHTML = `
+                        <div class="history-cell token">${trade.symbol || 'N/A'}</div>
+                        <div class="history-cell ${trade.entry_price ? 'buy' : 'sell'}">${trade.entry_price ? 'Compra' : 'Venda'}</div>
+                        <div class="history-cell">${trade.amount_sol ? trade.amount_sol.toFixed(4) + ' SOL' : 'N/A'}</div>
+                        <div class="history-cell">$${trade.entry_price ? trade.entry_price.toFixed(8) : 'N/A'}</div>
+                        <div class="history-cell ${trade.profit_loss_sol >= 0 ? 'profit' : 'loss'}">
+                            ${trade.profit_loss_sol !== undefined ? (trade.profit_loss_sol >= 0 ? '+' : '') + trade.profit_loss_sol.toFixed(4) + ' SOL' : 'N/A'}
+                        </div>
+                        <div class="history-cell">
+                            ${trade.tx ? `<a href="https://solscan.io/tx/${trade.tx}" target="_blank" class="history-link">Ver TX</a>` : 'N/A'}
+                            <button class="repeat-trade-btn" onclick="repeatTrade('${trade.contract_address}')">🔄</button>
+                        </div>
+                    `;
+                    rowsContainer.appendChild(row);
+                });
+            } catch (error) {
+                showAlert('Erro ao carregar histórico: ' + error.message, 'error');
+            }
+        }
+
+        function repeatTrade(contractAddress) {
+            document.getElementById('tokenAddress').value = contractAddress;
+            showAlert('Token carregado! Ajuste a quantidade e obtenha a cotação.', 'info');
+        }
+
+        async function pasteFromLastToken() {
+            try {
+                const response = await fetch('/api/last-token');
+                const data = await response.json();
+                if (data && data.contract_address) {
+                    document.getElementById('tokenAddress').value = data.contract_address;
+                    showAlert('Contract Address do último token colado!', 'success');
+                } else {
+                    showAlert('Nenhum token detectado recentemente', 'warning');
+                }
+            } catch (error) {
+                showAlert('Erro ao buscar último token', 'error');
+            }
+        }
+
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} animate-slide-in`;
+            alert.innerHTML = `
+                <div class="alert-icon">${type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️'}</div>
+                <div class="alert-message">${message}</div>
+            `;
+            container.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            }, 5000);
+        }
+
+        function toggleDarkMode() {
+            // Dark mode já é padrão, mas pode adicionar toggle se necessário
+            showAlert('Dark mode é o padrão nesta interface', 'info');
+        }
+
+        function loadData() {
+            loadInitialData();
+            showAlert('Dados atualizados!', 'success');
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

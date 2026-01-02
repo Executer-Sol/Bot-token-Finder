@@ -1,0 +1,3299 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#6d28d9">
+    <title>Bot Token Finder</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS inline otimizado -->
+    <style>
+        /* ===== RESET E CONFIGURAÇÕES GERAIS ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #8b5cf6;
+            --primary-dark: #7c3aed;
+            --primary-light: #a78bfa;
+            --secondary: #10b981;
+            --secondary-dark: #059669;
+            --danger: #ef4444;
+            --danger-dark: #dc2626;
+            --warning: #f59e0b;
+            --warning-dark: #d97706;
+            --info: #3b82f6;
+            --info-dark: #2563eb;
+            --dark: #1f2937;
+            --darker: #111827;
+            --light: #f9fafb;
+            --lighter: #ffffff;
+            --gray: #6b7280;
+            --gray-light: #e5e7eb;
+            --success: #10b981;
+            --radius: 12px;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.15);
+            --transition: all 0.3s ease;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%);
+            color: #1f2937;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        body.dark-mode {
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* ===== LOADING ===== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+        
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* ===== BARRA SUPERIOR ===== */
+        .top-control-bar {
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 15px 25px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow);
+        }
+        
+        .control-bar-left, .control-bar-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .control-bar-item {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            color: #1f2937;
+            user-select: none;
+        }
+        
+        .control-bar-item:hover {
+            background: #e5e7eb;
+            transform: translateY(-2px);
+        }
+        
+        .control-bar-item.success {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        
+        .control-bar-item.danger {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        
+        .control-bar-item.info {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        
+        .control-btn-icon {
+            font-size: 1.2em;
+        }
+        
+        .live-clock {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            font-family: monospace;
+            font-weight: 600;
+            color: #1e40af;
+        }
+        
+        /* ===== HEADER ===== */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: #ffffff;
+            border-radius: var(--radius);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            color: #3b82f6;
+            text-shadow: none;
+        }
+        
+        .header p {
+            color: #6b7280;
+            font-size: 1.1em;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* ===== CARDS ===== */
+        .card {
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #3b82f6;
+        }
+        
+        .card h2 i {
+            color: #3b82f6;
+        }
+        
+        /* ===== GRID DE ESTATÍSTICAS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 25px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, #3b82f6, #60a5fa);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .stat-card h3 {
+            font-size: 0.9em;
+            color: #6b7280;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: #1f2937;
+        }
+        
+        .stat-details {
+            font-size: 0.9em;
+            color: #6b7280;
+        }
+        
+        /* ===== PAINEL DE CARTEIRA ===== */
+        .wallet-panel {
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .balance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .balance-item {
+            background: #f9fafb;
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .balance-label {
+            font-size: 0.9em;
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+        
+        .balance-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        /* ===== COMPRA/VENDA MANUAL ===== */
+        .trade-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 14px;
+            background: #ffffff;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            color: #1f2937;
+            font-size: 1em;
+            transition: var(--transition);
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #ffffff;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));
+            color: white;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+        
+        /* ===== CONTROLE DO BOT ===== */
+        .bot-control-top {
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .bot-status {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .bot-status-icon {
+            font-size: 2em;
+        }
+        
+        .bot-status-text {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .bot-toggle-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            background: linear-gradient(135deg, var(--danger), var(--danger-dark));
+            color: white;
+            font-size: 1.1em;
+        }
+        
+        .bot-toggle-btn.active {
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));
+        }
+        
+        .bot-toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+        }
+        
+        .bot-toggle-btn.active:hover {
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+        
+        /* ===== ABAS ===== */
+        .tabs-container {
+            margin-top: 30px;
+        }
+        
+        .tabs-header {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        
+        .tab-btn {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            color: #6b7280;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .tab-btn:hover {
+            background: #e5e7eb;
+            color: #1f2937;
+        }
+        
+        .tab-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* ===== TABELAS ===== */
+        .trades-table-container {
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .table-header h3 {
+            color: #3b82f6;
+        }
+        
+        .table-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .filter-select {
+            padding: 10px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #1f2937;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .filter-select:hover {
+            border-color: #3b82f6;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .trades-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .trades-table th {
+            text-align: left;
+            padding: 15px;
+            background: #f9fafb;
+            color: #1f2937;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .trades-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+            color: #1f2937;
+        }
+        
+        .trades-table tr:hover {
+            background: #f9fafb;
+        }
+        
+        .profit {
+            color: #10b981;
+            font-weight: 600;
+        }
+        
+        .loss {
+            color: #ef4444;
+            font-weight: 600;
+        }
+        
+        .score-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        
+        /* ===== RESPONSIVO ===== */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .top-control-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .control-bar-left, .control-bar-right {
+                justify-content: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .trade-panel {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .tabs-header {
+                flex-wrap: wrap;
+            }
+            
+            .tab-btn {
+                flex: 1;
+                min-width: 140px;
+                justify-content: center;
+            }
+            
+            .bot-control-top {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+        }
+        
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        
+        /* ===== TOAST ===== */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 400px;
+        }
+        
+        .toast {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3b82f6;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #1f2937;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .toast.success {
+            border-left-color: var(--success);
+        }
+        
+        .toast.error {
+            border-left-color: var(--danger);
+        }
+        
+        .toast.warning {
+            border-left-color: var(--warning);
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="initialLoader">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <div class="container">
+        <!-- Barra de Controle Superior -->
+        <div class="top-control-bar">
+            <div class="control-bar-left">
+                <div class="control-bar-item live-clock" id="liveClock">
+                    <i class="fas fa-clock control-btn-icon"></i>
+                    <span id="clockTime">--:--:--</span>
+                </div>
+                
+                <div class="control-bar-item info" onclick="loadData()" title="Atualizar dados">
+                    <i class="fas fa-sync-alt control-btn-icon"></i>
+                    <span>Atualizar</span>
+                </div>
+                
+                <div class="control-bar-item success" onclick="toggleRealtimeMonitoring()" id="realtimeMonitorBtn">
+                    <i class="fas fa-bolt control-btn-icon"></i>
+                    <span>Tempo Real</span>
+                </div>
+            </div>
+            
+            <div class="control-bar-right">
+                <div class="control-bar-item" onclick="toggleDarkMode()">
+                    <i class="fas fa-moon control-btn-icon"></i>
+                    <span>Modo Escuro</span>
+                </div>
+                
+                <div class="control-bar-item danger" onclick="confirmResetAll()">
+                    <i class="fas fa-trash-alt control-btn-icon"></i>
+                    <span>Zerar Tudo</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-robot"></i> Bot Token Finder</h1>
+            <p>Dashboard inteligente para monitoramento e controle do seu bot de trading</p>
+        </div>
+        
+        <!-- Controle do Bot (APENAS UM - NO TOPO) -->
+        <div class="bot-control-top" id="botControlPanel">
+            <div class="bot-status">
+                <div class="bot-status-icon" id="botStatusIcon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div>
+                    <div class="bot-status-text" id="botStatusText">Status: Carregando...</div>
+                    <div style="font-size: 0.9em; opacity: 0.8;">Clique no botão para ativar/desativar</div>
+                </div>
+            </div>
+            <button class="bot-toggle-btn" onclick="toggleBot()" id="toggleBotBtn">
+                <i class="fas fa-play"></i>
+                <span>Ativar Bot</span>
+            </button>
+        </div>
+        
+        <!-- Grid de Estatísticas -->
+        <div class="stats-grid" id="kpiGrid">
+            <!-- Será preenchido via JavaScript -->
+            <div class="stat-card">
+                <h3><i class="fas fa-chart-line"></i> Tokens Ativos</h3>
+                <div class="stat-value" id="activeCount">0</div>
+                <div class="stat-details">Em posição</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3><i class="fas fa-check-circle"></i> Tokens Vendidos</h3>
+                <div class="stat-value" id="soldCount">0</div>
+                <div class="stat-details">Histórico completo</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3><i class="fas fa-wallet"></i> Lucro Ativo</h3>
+                <div class="stat-value" id="activeProfit">0 SOL</div>
+                <div class="stat-details">Não realizado</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3><i class="fas fa-coins"></i> Lucro Vendido</h3>
+                <div class="stat-value" id="soldProfit">0 SOL</div>
+                <div class="stat-details">Realizado</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3><i class="fas fa-trophy"></i> Lucro Total</h3>
+                <div class="stat-value" id="overallProfit">0 SOL</div>
+                <div class="stat-details">Saldo consolidado</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3><i class="fas fa-percentage"></i> Win Rate</h3>
+                <div class="stat-value" id="winRate">0%</div>
+                <div class="stat-details" id="winRateDetails">0/0 trades</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3><i class="fas fa-chart-bar"></i> ROI Médio</h3>
+                <div class="stat-value" id="avgROI">0%</div>
+                <div class="stat-details">Retorno médio</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3><i class="fas fa-calendar-day"></i> Hoje</h3>
+                <div class="stat-value" id="todayTokens">0</div>
+                <div class="stat-details" id="totalTokens">Total: 0</div>
+            </div>
+        </div>
+        
+        <!-- Carteira -->
+        <div class="wallet-panel card">
+            <h2><i class="fas fa-wallet"></i> Carteira</h2>
+            <div class="balance-grid">
+                <div class="balance-item">
+                    <div class="balance-label">SOL Balance</div>
+                    <div class="balance-value" id="solBalance">0.00</div>
+                </div>
+                <div class="balance-item">
+                    <div class="balance-label">USDC Balance</div>
+                    <div class="balance-value" id="usdcBalance">0.00</div>
+                </div>
+                <div class="balance-item">
+                    <div class="balance-label">Tokens</div>
+                    <div class="balance-value" id="tokenCount">0</div>
+                </div>
+                <div class="balance-item">
+                    <div class="balance-label">Valor Total</div>
+                    <div class="balance-value" id="totalValue">$0.00</div>
+                </div>
+            </div>
+            <div style="margin-top: 20px; font-size: 0.9em; opacity: 0.8;">
+                <i class="fas fa-address-card"></i>
+                <span id="walletAddress">Endereço: Carregando...</span>
+            </div>
+        </div>
+        
+        <!-- Último Token -->
+        <div class="card">
+            <h2><i class="fas fa-search"></i> Último Token Detectado</h2>
+            <div id="lastTokenContent" style="text-align: center; padding: 30px;">
+                <div class="loading">Carregando último token...</div>
+            </div>
+        </div>
+        
+        <!-- Compra e Venda Manual -->
+        <div class="trade-panel">
+            <div class="card">
+                <h2><i class="fas fa-shopping-cart"></i> Compra Manual</h2>
+                <div class="input-group">
+                    <label for="manualTokenCA">Contract Address</label>
+                    <input type="text" id="manualTokenCA" placeholder="Cole a CA do token">
+                </div>
+                <div class="input-group">
+                    <label for="manualAmountSOL">Quantidade (SOL)</label>
+                    <input type="number" id="manualAmountSOL" placeholder="0.05" step="0.01" min="0.01">
+                </div>
+                <button class="btn btn-primary" onclick="manualBuyToken()">
+                    <i class="fas fa-rocket"></i>
+                    Comprar Token
+                </button>
+                <div id="manualBuyResult" style="margin-top: 15px;"></div>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-money-bill-wave"></i> Venda Manual</h2>
+                <div class="input-group">
+                    <label for="manualSellTokenCA">Contract Address</label>
+                    <input type="text" id="manualSellTokenCA" placeholder="Cole a CA do token">
+                </div>
+                <div class="input-group">
+                    <label for="manualSellAmount">Quantidade (%)</label>
+                    <input type="number" id="manualSellAmount" placeholder="100" min="1" max="100">
+                </div>
+                <button class="btn btn-success" onclick="manualSellToken()">
+                    <i class="fas fa-cash-register"></i>
+                    Vender Token
+                </button>
+                <div id="manualSellResult" style="margin-top: 15px;"></div>
+            </div>
+        </div>
+        
+        <!-- Sistema de Abas -->
+        <div class="tabs-container">
+            <div class="tabs-header">
+                <button class="tab-btn active" onclick="switchTab('ativos')">
+                    <i class="fas fa-chart-line"></i>
+                    Ativos
+                </button>
+                <button class="tab-btn" onclick="switchTab('resumo-dia')">
+                    <i class="fas fa-calendar-day"></i>
+                    Resumo do Dia
+                </button>
+                <button class="tab-btn" onclick="switchTab('vendidos')">
+                    <i class="fas fa-check-circle"></i>
+                    Vendidos
+                </button>
+                <button class="tab-btn" onclick="switchTab('valores-compra')">
+                    <i class="fas fa-dollar-sign"></i>
+                    Valores de Compra
+                </button>
+                <button class="tab-btn" onclick="switchTab('config')">
+                    <i class="fas fa-cog"></i>
+                    Configurações
+                </button>
+                <button class="tab-btn" onclick="switchTab('analise')">
+                    <i class="fas fa-chart-bar"></i>
+                    Análise
+                </button>
+                <button class="tab-btn" onclick="switchTab('inteligencia')">
+                    <i class="fas fa-brain"></i>
+                    Inteligência
+                </button>
+                <button class="tab-btn" onclick="switchTab('detectados')">
+                    <i class="fas fa-eye"></i>
+                    Detectados
+                </button>
+                <button class="tab-btn" onclick="switchTab('blacklist')">
+                    <i class="fas fa-ban"></i>
+                    Blacklist
+                </button>
+            </div>
+            
+            <!-- Aba Ativos -->
+            <div id="tab-ativos" class="tab-content active">
+                <div class="trades-table-container">
+                    <div class="table-header">
+                        <h3><i class="fas fa-chart-line"></i> Tokens Ativos</h3>
+                        <div class="table-controls" style="display: flex; gap: 10px; align-items: center;">
+                            <select class="filter-select" id="activeFilter" onchange="filterActiveTrades()">
+                                <option value="all">Todos</option>
+                                <option value="profit">Em lucro</option>
+                                <option value="loss">Em prejuízo</option>
+                            </select>
+                            <button class="btn btn-success" onclick="updateActiveTradesPrices()" style="width: auto; padding: 8px 16px; font-size: 0.9em;">
+                                <i class="fas fa-sync-alt"></i> Atualizar Preços
+                            </button>
+                        </div>
+                    </div>
+                    <div id="activeTrades">
+                        <div class="loading">Carregando trades ativos...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Aba Resumo do Dia -->
+            <div id="tab-resumo-dia" class="tab-content">
+                <div class="card">
+                    <h2><i class="fas fa-calendar-day"></i> Resumo do Dia - Tokens Ativos</h2>
+                    <div id="resumoDiaTokens" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; margin-top: 20px;">
+                        <div class="loading">Carregando tokens ativos...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Aba Vendidos -->
+            <div id="tab-vendidos" class="tab-content">
+                <div class="trades-table-container">
+                    <div class="table-header">
+                        <h3><i class="fas fa-check-circle"></i> Tokens Vendidos</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-success" onclick="exportSoldTrades()" style="width: auto; padding: 12px 20px;">
+                                <i class="fas fa-download"></i>
+                                Exportar CSV
+                            </button>
+                            <button class="btn btn-success" onclick="updateSellPrices()" style="width: auto; padding: 12px 20px;">
+                                <i class="fas fa-sync-alt"></i>
+                                Atualizar Preços
+                            </button>
+                        </div>
+                    </div>
+                    <div id="soldTrades">
+                        <div class="loading">Carregando trades vendidos...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Aba Valores de Compra -->
+            <div id="tab-valores-compra" class="tab-content">
+                <div class="card">
+                    <h2><i class="fas fa-dollar-sign"></i> Valores de Compra por Score</h2>
+                    <div style="margin-bottom: 30px; padding: 20px; background: #f9fafb; border-radius: 10px;">
+                        <h3 style="color: #3b82f6; margin-bottom: 15px; font-size: 1.2em;">💰 Valores em SOL</h3>
+                        
+                        <div style="display: grid; gap: 20px;">
+                            <!-- Score 15-17 -->
+                            <div style="padding: 20px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;">
+                                <h4 style="color: #3b82f6; margin-bottom: 15px;">Score 15-17</h4>
+                                <div class="input-group">
+                                    <label style="color: #1f2937;">Valor em SOL:</label>
+                                    <input type="number" id="amountSol15_17" step="0.01" min="0.01" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; background: #ffffff; color: #1f2937;">
+                                </div>
+                                <div class="input-group">
+                                    <label style="color: #1f2937;">Tempo Máximo (minutos):</label>
+                                    <input type="number" id="maxTime15_17" min="1" max="60" step="1" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; background: #ffffff; color: #1f2937;">
+                                </div>
+                            </div>
+                            
+                            <!-- Score 18-19 -->
+                            <div style="padding: 20px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;">
+                                <h4 style="color: #3b82f6; margin-bottom: 15px;">Score 18-19</h4>
+                                <div class="input-group">
+                                    <label style="color: #1f2937;">Valor em SOL:</label>
+                                    <input type="number" id="amountSol18_19" step="0.01" min="0.01" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; background: #ffffff; color: #1f2937;">
+                                </div>
+                                <div class="input-group">
+                                    <label style="color: #1f2937;">Tempo Máximo (minutos):</label>
+                                    <input type="number" id="maxTime18_19" min="1" max="60" step="1" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; background: #ffffff; color: #1f2937;">
+                                </div>
+                            </div>
+                            
+                            <!-- Score 20-21 -->
+                            <div style="padding: 20px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;">
+                                <h4 style="color: #3b82f6; margin-bottom: 15px;">Score 20-21</h4>
+                                <div class="input-group">
+                                    <label style="color: #1f2937;">Valor em SOL:</label>
+                                    <input type="number" id="amountSol20_21" step="0.01" min="0.01" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; background: #ffffff; color: #1f2937;">
+                                </div>
+                                <div class="input-group">
+                                    <label style="color: #1f2937;">Tempo Máximo (minutos):</label>
+                                    <input type="number" id="maxTime20_21" min="1" max="60" step="1" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; background: #ffffff; color: #1f2937;">
+                                </div>
+                            </div>
+                            
+                            <!-- Score Low -->
+                            <div style="padding: 20px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;">
+                                <h4 style="color: #3b82f6; margin-bottom: 15px;">Score &lt;15 (Baixo)</h4>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                    <input type="checkbox" id="enableLowScore" style="width: 20px; height: 20px; cursor: pointer;">
+                                    <label for="enableLowScore" style="color: #1f2937; cursor: pointer;">Habilitar compra de tokens com score baixo</label>
+                                </div>
+                                <div class="input-group">
+                                    <label style="color: #1f2937;">Valor em SOL (se habilitado):</label>
+                                    <input type="number" id="amountSolLow" step="0.01" min="0.01" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; background: #ffffff; color: #1f2937;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="saveBuyAmounts()" style="width: 100%; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); margin-top: 20px;">
+                        💾 Salvar Valores de Compra
+                    </button>
+                    <div id="buyConfigSaveResult" style="margin-top: 15px; padding: 12px; border-radius: 8px; display: none;"></div>
+                </div>
+            </div>
+            
+            <!-- Aba Configurações -->
+            <div id="tab-config" class="tab-content">
+                <div class="card">
+                    <h2><i class="fas fa-cog"></i> Configurações de Trading</h2>
+                    
+                    <!-- Take Profits -->
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="color: #3b82f6; margin-bottom: 15px; font-size: 1.2em;">💰 Take Profits por Score</h3>
+                        
+                        <!-- Score 15-17 -->
+                        <div style="margin-bottom: 25px; padding: 20px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px;">
+                            <h4 style="color: #3b82f6; margin-bottom: 15px;">Score 15-17</h4>
+                            <div id="tp-config-15-17" style="display: grid; gap: 15px;">
+                                <div class="loading">Carregando...</div>
+                            </div>
+                            <button onclick="addTP('15-17')" style="margin-top: 10px; background: #10b981; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">➕ Adicionar TP</button>
+                        </div>
+                        
+                        <!-- Score 18-19 -->
+                        <div style="margin-bottom: 25px; padding: 20px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px;">
+                            <h4 style="color: #3b82f6; margin-bottom: 15px;">Score 18-19</h4>
+                            <div id="tp-config-18-19" style="display: grid; gap: 15px;">
+                                <div class="loading">Carregando...</div>
+                            </div>
+                            <button onclick="addTP('18-19')" style="margin-top: 10px; background: #10b981; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">➕ Adicionar TP</button>
+                        </div>
+                        
+                        <!-- Score 20-21 -->
+                        <div style="margin-bottom: 25px; padding: 20px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px;">
+                            <h4 style="color: #3b82f6; margin-bottom: 15px;">Score 20-21</h4>
+                            <div id="tp-config-20-21" style="display: grid; gap: 15px;">
+                                <div class="loading">Carregando...</div>
+                            </div>
+                            <button onclick="addTP('20-21')" style="margin-top: 10px; background: #10b981; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">➕ Adicionar TP</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Stop Loss -->
+                    <div style="margin-bottom: 30px; padding: 20px; background: #fef3c7; border-radius: 10px; border-left: 4px solid #f59e0b;">
+                        <h3 style="color: #92400e; margin-bottom: 15px; font-size: 1.2em;">🛑 Stop Loss</h3>
+                        
+                        <div style="display: grid; gap: 15px;">
+                            <div class="input-group">
+                                <label style="color: #1f2937;">⏱️ Stop Loss por Tempo (minutos):</label>
+                                <input type="number" id="stopLossTime" min="1" max="60" step="1" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; background: #ffffff; color: #1f2937;">
+                                <div style="font-size: 0.8em; color: #6b7280; margin-top: 5px;">Vende se token não subir em X minutos</div>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label style="color: #1f2937;">📉 Múltiplo Mínimo:</label>
+                                <input type="number" id="stopLossMinMultiple" min="0.5" max="2.0" step="0.1" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; background: #ffffff; color: #1f2937;">
+                                <div style="font-size: 0.8em; color: #6b7280; margin-top: 5px;">Vende se múltiplo cair abaixo deste valor</div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="stopLossPercentEnabled" style="width: 20px; height: 20px; cursor: pointer;" onchange="document.getElementById('stopLossPercentConfig').style.display = this.checked ? 'block' : 'none';">
+                                <label for="stopLossPercentEnabled" style="color: #1f2937; cursor: pointer;">Ativar Stop Loss por Queda Percentual</label>
+                            </div>
+                            
+                            <div id="stopLossPercentConfig" style="display: none;">
+                                <div class="input-group">
+                                    <label style="color: #1f2937;">📉 Queda Percentual (%):</label>
+                                    <input type="number" id="stopLossPercentThreshold" min="5" max="50" step="5" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; background: #ffffff; color: #1f2937;">
+                                    <div style="font-size: 0.8em; color: #6b7280; margin-top: 5px;">Vende se token cair X% do pico (ex: 20% = vende se cair 20% do máximo)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="saveTradingConfig()" style="width: 100%; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);">
+                        💾 Salvar Configurações
+                    </button>
+                    <div id="configSaveResult" style="margin-top: 15px; padding: 12px; border-radius: 8px; display: none;"></div>
+                </div>
+            </div>
+            
+            <!-- Aba Análise -->
+            <div id="tab-analise" class="tab-content">
+                <div class="card">
+                    <h2><i class="fas fa-chart-bar"></i> Análise de Performance</h2>
+                    <div id="performanceAnalysis" style="margin-top: 20px;">
+                        <div class="loading">Carregando análise de performance...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Aba Inteligência -->
+            <div id="tab-inteligencia" class="tab-content">
+                <div class="card">
+                    <h2><i class="fas fa-brain"></i> Inteligência - Análise de Tokens Detectados</h2>
+                    <div id="intelligenceContent" style="margin-top: 20px;">
+                        <div class="loading">Carregando análise inteligente...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Aba Tokens Detectados -->
+            <div id="tab-detectados" class="tab-content">
+                <div class="card">
+                    <h2><i class="fas fa-eye"></i> Tokens Detectados</h2>
+                    <div style="margin-bottom: 20px; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+                        <p style="color: #6b7280; margin: 0 0 15px 0;">
+                            <i class="fas fa-info-circle"></i> Esta aba mostra todos os tokens que o bot detectou, mesmo que não tenha comprado. 
+                            Os preços são atualizados automaticamente.
+                        </p>
+                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: end;">
+                            <div class="input-group" style="margin-bottom: 0;">
+                                <label style="color: #1f2937; font-size: 0.9em;">🔍 Buscar (Símbolo ou CA):</label>
+                                <input type="text" id="detectedSearchInput" placeholder="Digite para buscar..." 
+                                       oninput="filterDetectedTokens()" 
+                                       style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; background: #ffffff; color: #1f2937;">
+                            </div>
+                            <div class="input-group" style="margin-bottom: 0;">
+                                <label style="color: #1f2937; font-size: 0.9em;">📊 Score:</label>
+                                <select id="detectedScoreFilter" onchange="filterDetectedTokens()" 
+                                        style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; background: #ffffff; color: #1f2937;">
+                                    <option value="all">Todos</option>
+                                    <option value="15-17">15-17</option>
+                                    <option value="18-19">18-19</option>
+                                    <option value="20-21">20-21</option>
+                                    <option value="low">&lt;15</option>
+                                </select>
+                            </div>
+                            <div class="input-group" style="margin-bottom: 0;">
+                                <label style="color: #1f2937; font-size: 0.9em;">💰 Status:</label>
+                                <select id="detectedStatusFilter" onchange="filterDetectedTokens()" 
+                                        style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; background: #ffffff; color: #1f2937;">
+                                    <option value="all">Todos</option>
+                                    <option value="bought">Comprados</option>
+                                    <option value="not_bought">Não Comprados</option>
+                                </select>
+                            </div>
+                            <div class="input-group" style="margin-bottom: 0;">
+                                <label style="color: #1f2937; font-size: 0.9em;">📈 Performance:</label>
+                                <select id="detectedPerformanceFilter" onchange="filterDetectedTokens()" 
+                                        style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; background: #ffffff; color: #1f2937;">
+                                    <option value="all">Todos</option>
+                                    <option value="profit">Lucro</option>
+                                    <option value="loss">Prejuízo</option>
+                                    <option value="high">Alto Múltiplo (&gt;2x)</option>
+                                </select>
+                            </div>
+                            <button onclick="exportDetectedTokens()" 
+                                    style="padding: 10px 15px; background: #10b981; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600; white-space: nowrap;">
+                                <i class="fas fa-download"></i> CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div id="detectedTokensContent">
+                        <div class="loading">Carregando tokens detectados...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Aba Blacklist -->
+            <div id="tab-blacklist" class="tab-content">
+                <div class="card">
+                    <h2><i class="fas fa-ban"></i> Blacklist de Tokens</h2>
+                    <div class="input-group">
+                        <label for="blacklistCA">Adicionar Token</label>
+                        <input type="text" id="blacklistCA" placeholder="Cole a CA do token">
+                        <button class="btn btn-danger" onclick="addToBlacklist()" style="margin-top: 10px;">
+                            <i class="fas fa-plus"></i>
+                            Adicionar à Blacklist
+                        </button>
+                    </div>
+                    <div id="blacklistContent" style="margin-top: 20px;">
+                        <div class="loading">Carregando blacklist...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <script>
+        // ===== FUNÇÕES BÁSICAS =====
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+        
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+            showToast('Modo escuro ' + (document.body.classList.contains('dark-mode') ? 'ativado' : 'desativado'));
+        }
+        
+        function updateClock() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('pt-BR');
+            document.getElementById('clockTime').textContent = time;
+        }
+        
+        // ===== CONTROLE DO BOT =====
+        let botEnabled = false;
+        
+        async function loadBotState() {
+            try {
+                const response = await fetch('/api/bot/state');
+                const data = await response.json();
+                botEnabled = data.enabled;
+                
+                const icon = document.getElementById('botStatusIcon');
+                const text = document.getElementById('botStatusText');
+                const btn = document.getElementById('toggleBotBtn');
+                
+                if (botEnabled) {
+                    icon.innerHTML = '<i class="fas fa-robot" style="color: #10b981;"></i>';
+                    text.textContent = 'Status: ATIVO';
+                    btn.innerHTML = '<i class="fas fa-pause"></i><span>Desativar Bot</span>';
+                    btn.classList.add('active');
+                } else {
+                    icon.innerHTML = '<i class="fas fa-robot" style="color: #ef4444;"></i>';
+                    text.textContent = 'Status: DESATIVADO';
+                    btn.innerHTML = '<i class="fas fa-play"></i><span>Ativar Bot</span>';
+                    btn.classList.remove('active');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar estado do bot:', error);
+            }
+        }
+        
+        async function toggleBot() {
+            try {
+                const newState = !botEnabled;
+                const btn = document.getElementById('toggleBotBtn');
+                btn.disabled = true;
+                
+                const response = await fetch('/api/bot/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled: newState })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    showToast(data.message, 'success');
+                    await loadBotState();
+                } else {
+                    showToast('Erro: ' + (data.error || 'Erro desconhecido'), 'error');
+                }
+            } catch (error) {
+                showToast('Erro ao alterar estado do bot', 'error');
+            } finally {
+                document.getElementById('toggleBotBtn').disabled = false;
+            }
+        }
+        
+        // ===== CARREGAMENTO DE DADOS =====
+        async function loadData() {
+            try {
+                // Carrega múltiplos endpoints em paralelo
+                const [stats, wallet, activeTrades, lastToken] = await Promise.all([
+                    fetch('/api/stats').then(r => r.json()),
+                    fetch('/api/wallet-balance').then(r => r.json()),
+                    fetch('/api/trades/active').then(r => r.json()),
+                    fetch('/api/last-token').then(r => r.json())
+                ]);
+                
+                // Atualiza estatísticas
+                updateStats(stats);
+                updateWallet(wallet);
+                updateActiveTrades(activeTrades);
+                updateLastToken(lastToken);
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+            }
+        }
+        
+        // Função para atualizar TODAS as abas após qualquer ação
+        async function refreshAllTabs() {
+            try {
+                console.log('🔄 Atualizando todas as abas...');
+                
+                // Atualiza dados principais
+                await loadData();
+                
+                // Atualiza todas as abas, independente de qual está ativa
+                await Promise.all([
+                    loadSoldTrades().catch(e => console.error('Erro ao carregar vendidos:', e)),
+                    loadDaySummary().catch(e => console.error('Erro ao carregar resumo do dia:', e)),
+                    updatePerformanceAnalysis().catch(e => console.error('Erro ao carregar análise:', e)),
+                    loadDetectedTokens().catch(e => console.error('Erro ao carregar detectados:', e)),
+                    loadBlacklist().catch(e => console.error('Erro ao carregar blacklist:', e)),
+                    loadIntelligence().catch(e => console.error('Erro ao carregar inteligência:', e))
+                ]);
+                
+                console.log('✅ Todas as abas atualizadas!');
+            } catch (error) {
+                console.error('Erro ao atualizar todas as abas:', error);
+            }
+        }
+        
+        // ===== ATUALIZAÇÃO DE PREÇOS =====
+        async function updateActiveTradesPrices() {
+            try {
+                const response = await fetch('/api/trades/active/update-prices', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // Recarrega trades ativos com preços atualizados
+                    await loadData();
+                    console.log(`✅ ${data.updated} de ${data.total} preços atualizados`);
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar preços:', error);
+            }
+        }
+        
+        function updateStats(stats) {
+            document.getElementById('activeCount').textContent = stats.active_count || 0;
+            document.getElementById('soldCount').textContent = stats.sold_count || 0;
+            document.getElementById('activeProfit').textContent = (stats.total_active_profit_loss || 0).toFixed(4) + ' SOL';
+            document.getElementById('soldProfit').textContent = (stats.total_sold_profit_loss || 0).toFixed(4) + ' SOL';
+            document.getElementById('overallProfit').textContent = (stats.overall_profit_loss || 0).toFixed(4) + ' SOL';
+            document.getElementById('winRate').textContent = (stats.win_rate || 0).toFixed(1) + '%';
+            document.getElementById('winRateDetails').textContent = 
+                `${stats.profitable_trades || 0} ganhos / ${stats.losing_trades || 0} perdas`;
+            document.getElementById('avgROI').textContent = (stats.avg_roi || 0).toFixed(1) + '%';
+            document.getElementById('todayTokens').textContent = stats.today_tokens_bought || 0;
+            document.getElementById('totalTokens').textContent = `Total: ${stats.total_tokens_bought || 0}`;
+        }
+        
+        function updateWallet(wallet) {
+            document.getElementById('solBalance').textContent = (wallet.sol || 0).toFixed(4);
+            document.getElementById('usdcBalance').textContent = (wallet.usdc || 0).toFixed(2);
+            document.getElementById('tokenCount').textContent = wallet.other_tokens_count || 0;
+            document.getElementById('totalValue').textContent = `$${(wallet.total_value_usd || 0).toFixed(2)}`;
+            document.getElementById('walletAddress').textContent = 
+                `Endereço: ${wallet.wallet_address ? wallet.wallet_address.substring(0, 8) + '...' + wallet.wallet_address.substring(wallet.wallet_address.length - 6) : 'Não disponível'}`;
+        }
+        
+        function updateActiveTrades(trades) {
+            // Armazena todos os trades para filtros
+            allActiveTrades = trades || [];
+            
+            // Aplica filtro atual
+            filterActiveTrades();
+        }
+        
+        function renderActiveTrades(trades) {
+            const container = document.getElementById('activeTrades');
+            if (!trades || trades.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6)">Nenhum token ativo</div>';
+                return;
+            }
+            
+            let html = '<table class="trades-table"><thead><tr>';
+            html += '<th>Token</th><th>Score</th><th>Entrada</th><th>Atual</th><th>%</th><th>Valor</th><th>Segurando</th><th>Comprado</th><th>Tempo</th><th>Ações</th></tr></thead><tbody>';
+            
+            trades.forEach(trade => {
+                const percent = trade.percent_change || 0;
+                const profitClass = percent >= 0 ? 'profit' : 'loss';
+                const timeSince = trade.timestamp ? Math.floor((Date.now() - new Date(trade.timestamp).getTime()) / 60000) : 0;
+                const remainingPercent = trade.remaining_percent || 100;
+                const soldPercent = 100 - remainingPercent;
+                const currentValue = (trade.amount_sol || 0) * (trade.multiple || 1) * (remainingPercent / 100);
+                
+                // Formata horário de compra
+                const buyDate = trade.timestamp ? new Date(trade.timestamp) : new Date();
+                const buyTimeStr = buyDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const buyDateStr = buyDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                
+                // Formata tempo decorrido
+                let timeStr = '';
+                if (timeSince < 1) {
+                    timeStr = '< 1min';
+                } else if (timeSince < 60) {
+                    timeStr = `${timeSince}min`;
+                } else {
+                    const hours = Math.floor(timeSince / 60);
+                    const mins = timeSince % 60;
+                    timeStr = `${hours}h ${mins}min`;
+                }
+                
+                    // Histórico de vendas parciais
+                    let salesHistoryHtml = '';
+                    if (trade.tps_executed && trade.tps_executed.length > 0) {
+                        salesHistoryHtml = '<div style="margin-top: 5px; font-size: 0.75em; opacity: 0.8;">';
+                        trade.tps_executed.forEach((tp) => {
+                            let tpText = '';
+                            let tpType = '🤖';
+                            let tpPercent = '';
+                            let tpPrice = '';
+                            
+                            if (typeof tp === 'string') {
+                                if (tp.includes('Manual')) {
+                                    tpType = '👤';
+                                    tpPercent = tp.replace('Manual', '').trim();
+                                } else {
+                                    tpText = tp;
+                                }
+                            } else if (typeof tp === 'object') {
+                                if (tp.type && tp.type.includes('manual')) {
+                                    tpType = '👤';
+                                }
+                                tpPercent = tp.percent ? `${tp.percent.toFixed(1)}%` : '';
+                                tpPrice = tp.price ? `@ $${tp.price.toFixed(8)}` : '';
+                                tpText = tp.type || '';
+                            }
+                            
+                            salesHistoryHtml += `<div style="margin-top: 2px;">${tpType} ${tpPercent || tpText} ${tpPrice}</div>`;
+                        });
+                        // Adiciona venda final se houver
+                        if (finalPrice > 0 && trade.tps_executed.length > 0) {
+                            const totalSoldInTPs = trade.tps_executed.reduce((sum, tp) => {
+                                if (typeof tp === 'object' && tp.percent) return sum + tp.percent;
+                                return sum;
+                            }, 0);
+                            const remainingSold = 100 - totalSoldInTPs;
+                            if (remainingSold > 0.1) {
+                                salesHistoryHtml += `<div style="margin-top: 2px;">👤 ${remainingSold.toFixed(1)}% @ $${finalPrice.toFixed(8)}</div>`;
+                            }
+                        }
+                        salesHistoryHtml += '</div>';
+                    }
+                    
+                    html += `<tr>
+                        <td>
+                            <strong>${trade.symbol || 'N/A'}</strong>
+                            ${salesHistoryHtml}
+                        </td>
+                        <td><span class="score-badge">${trade.score || 0}</span></td>
+                    <td>$${(trade.entry_price || 0).toFixed(8)}</td>
+                    <td>$${(trade.current_price || 0).toFixed(8)}</td>
+                    <td class="${profitClass}">${percent >= 0 ? '+' : ''}${percent.toFixed(2)}%</td>
+                    <td>${currentValue.toFixed(4)} SOL</td>
+                    <td>
+                        <span style="font-weight: 600; color: ${profitClass === 'profit' ? '#10b981' : '#ef4444'}">${remainingPercent.toFixed(1)}%</span>
+                        ${soldPercent > 0 ? ` <span style="font-size: 0.85em; opacity: 0.7;">(${soldPercent.toFixed(1)}% vendido)</span>` : ''}
+                        ${trade.tps_executed && trade.tps_executed.length > 0 ? `
+                        <div style="margin-top: 5px; font-size: 0.75em; opacity: 0.8;">
+                            <div style="color: #3b82f6;">📊 Vendas: ${trade.tps_executed.length}</div>
+                        </div>
+                        ` : ''}
+                    </td>
+                    <td style="font-size: 0.85em;">
+                        <div>${buyDateStr}</div>
+                        <div style="opacity: 0.8;">${buyTimeStr}</div>
+                    </td>
+                    <td style="font-size: 0.85em; color: ${timeSince < 5 ? '#10b981' : timeSince < 15 ? '#f59e0b' : '#ef4444'};">
+                        ${timeStr}
+                    </td>
+                    <td>
+                        <button onclick="markTokenAsSold('${trade.contract_address}')" 
+                                style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: bold;">
+                            ✅ Vender Manual
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        async function markTokenAsSold(contractAddress) {
+            try {
+                const tradesResponse = await fetch('/api/trades/active');
+                const trades = await tradesResponse.json();
+                const trade = trades.find(t => t.contract_address === contractAddress);
+                
+                if (!trade) {
+                    showToast('Token não encontrado', 'error');
+                    return;
+                }
+                
+                const currentPrice = trade.current_price || trade.entry_price || 0;
+                const entryPrice = trade.entry_price || 0;
+                
+                const priceInput = prompt(
+                    `Marcar ${trade.symbol || 'token'} como vendido manualmente\n\n` +
+                    `Preço de entrada: $${entryPrice.toFixed(8)}\n` +
+                    `Preço atual: $${currentPrice.toFixed(8)}\n\n` +
+                    `Informe o preço de venda (USD):`,
+                    currentPrice.toFixed(8)
+                );
+                
+                if (priceInput === null) return;
+                
+                const finalPrice = parseFloat(priceInput);
+                
+                if (isNaN(finalPrice) || finalPrice <= 0) {
+                    showToast('Preço inválido! Informe um valor numérico maior que zero.', 'error');
+                    return;
+                }
+                
+                const confirmMsg = `Confirmar venda de ${trade.symbol || 'token'}?\n\n` +
+                    `Preço de entrada: $${entryPrice.toFixed(8)}\n` +
+                    `Preço de venda: $${finalPrice.toFixed(8)}\n` +
+                    `Múltiplo: ${(finalPrice / entryPrice).toFixed(3)}x\n` +
+                    `Lucro/Perda: ${((finalPrice / entryPrice - 1) * 100).toFixed(2)}%`;
+                
+                if (!confirm(confirmMsg)) return;
+                
+                const response = await fetch('/api/trades/mark-sold', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        contract_address: contractAddress,
+                        final_price: finalPrice
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    const profitLoss = ((finalPrice / entryPrice - 1) * 100).toFixed(2);
+                    const profitText = profitLoss >= 0 ? `Lucro: +${profitLoss}%` : `Perda: ${profitLoss}%`;
+                    showToast(`✅ Token marcado como vendido! ${profitText}`, 'success');
+                    setTimeout(() => {
+                        refreshAllTabs(); // Atualiza TODAS as abas
+                        switchTab('vendidos');
+                    }, 500);
+                } else {
+                    showToast('Erro: ' + (data.error || 'Erro desconhecido'), 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao marcar como vendido:', error);
+                showToast('Erro ao marcar como vendido: ' + error.message, 'error');
+            }
+        }
+        
+        function updateLastToken(token) {
+            const container = document.getElementById('lastTokenContent');
+            if (!token || !token.symbol) {
+                container.innerHTML = '<div style="color: #6b7280">Nenhum token detectado ainda</div>';
+                return;
+            }
+            
+            const timeAgo = token.detected_at ? 
+                Math.floor((Date.now() - new Date(token.detected_at).getTime()) / 60000) : 'N/A';
+            
+            container.innerHTML = `
+                <div style="background: #ffffff; padding: 25px; border-radius: 12px; text-align: center; border: 1px solid #e5e7eb;">
+                    <div style="font-size: 2em; font-weight: bold; margin-bottom: 10px; color: #1f2937;">${token.symbol}</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin-top: 20px;">
+                        <div>
+                            <div style="font-size: 0.9em; color: #6b7280;">Score</div>
+                            <div style="font-size: 1.8em; font-weight: bold; color: #3b82f6;">${token.score || 0}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.9em; color: #6b7280;">Preço</div>
+                            <div style="font-size: 1.8em; font-weight: bold; color: #1f2937;">$${(token.price || 0).toFixed(8)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.9em; color: #6b7280;">Detectado há</div>
+                            <div style="font-size: 1.8em; font-weight: bold; color: #1f2937;">${timeAgo} min</div>
+                        </div>
+                    </div>
+                    ${token.contract_address ? `
+                        <div style="margin-top: 20px; background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                            <div style="font-size: 0.9em; color: #6b7280; margin-bottom: 5px;">Contract Address</div>
+                            <div style="font-family: monospace; word-break: break-all; font-size: 0.9em; color: #1f2937;">${token.contract_address}</div>
+                            <button onclick="copyToClipboard('${token.contract_address}')" 
+                                    style="margin-top: 10px; padding: 8px 15px; background: #3b82f6; border: none; border-radius: 6px; color: white; cursor: pointer;">
+                                <i class="fas fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        // ===== FUNÇÕES AUXILIARES =====
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copiado para a área de transferência!', 'success');
+            });
+        }
+        
+        function switchTab(tabName) {
+            // Remove active de todas as abas
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Ativa aba selecionada
+            const btn = document.querySelector(`.tab-btn[onclick="switchTab('${tabName}')"]`);
+            const tab = document.getElementById(`tab-${tabName}`);
+            if (btn) btn.classList.add('active');
+            if (tab) tab.classList.add('active');
+            
+            // Carrega dados específicos da aba
+            console.log(`Abrindo aba: ${tabName}`);
+            if (tabName === 'vendidos') {
+                loadSoldTrades().catch(e => console.error('Erro ao carregar vendidos:', e));
+            } else if (tabName === 'resumo-dia') {
+                loadDaySummary().catch(e => console.error('Erro ao carregar resumo do dia:', e));
+            } else if (tabName === 'valores-compra') {
+                loadBuyAmounts().catch(e => console.error('Erro ao carregar valores de compra:', e));
+            } else if (tabName === 'config') {
+                loadTradingConfig().catch(e => console.error('Erro ao carregar configurações:', e));
+            } else if (tabName === 'blacklist') {
+                loadBlacklist().catch(e => console.error('Erro ao carregar blacklist:', e));
+            } else if (tabName === 'analise') {
+                updatePerformanceAnalysis().catch(e => console.error('Erro ao carregar análise:', e));
+            } else if (tabName === 'inteligencia') {
+                loadIntelligence().catch(e => console.error('Erro ao carregar inteligência:', e));
+            } else if (tabName === 'detectados') {
+                loadDetectedTokens().catch(e => console.error('Erro ao carregar detectados:', e));
+            }
+        }
+        
+        async function updatePerformanceAnalysis() {
+            const container = document.getElementById('performanceAnalysis');
+            if (!container) return;
+            
+            try {
+                const [statsResponse, soldResponse] = await Promise.all([
+                    fetch('/api/stats'),
+                    fetch('/api/trades/sold')
+                ]);
+                
+                const stats = await statsResponse.json();
+                const soldTrades = await soldResponse.json();
+                
+                let html = '';
+                
+                // Análise por Score
+                if (stats.score_analysis && Object.keys(stats.score_analysis).length > 0) {
+                    html += '<div style="margin-bottom: 30px;">';
+                    html += '<h3 style="color: rgba(255,255,255,0.9); margin-bottom: 15px; font-size: 1.2em;">📊 Performance por Score (Tokens Vendidos)</h3>';
+                    html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">';
+                    
+                    // Ordem dos ranges
+                    const scoreRanges = ['15-17', '18-19', '20-21', '<15'];
+                    
+                    scoreRanges.forEach(scoreRange => {
+                        const data = stats.score_analysis[scoreRange] || {count: 0, profitable: 0, win_rate: 0, avg_roi: 0};
+                        const total = data.count || 0;
+                        const profitable = data.profitable || 0;
+                        const winRate = data.win_rate || 0;
+                        const avgROI = data.avg_roi || 0;
+                        
+                        // Só mostra se houver tokens vendidos
+                        if (total === 0) return;
+                        
+                        html += `
+                            <div style="padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                                <h4 style="color: rgba(255,255,255,0.9); margin-bottom: 15px;">Score ${scoreRange}</h4>
+                                <div style="display: grid; gap: 10px;">
+                                    <div>
+                                        <div style="font-size: 0.85em; opacity: 0.7;">Total Vendidos</div>
+                                        <div style="font-size: 1.5em; font-weight: bold;">${total}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.85em; opacity: 0.7;">Win Rate</div>
+                                        <div style="font-size: 1.5em; font-weight: bold; color: ${winRate >= 50 ? '#10b981' : '#ef4444'};">${winRate}%</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.85em; opacity: 0.7;">ROI Médio</div>
+                                        <div style="font-size: 1.5em; font-weight: bold; color: ${avgROI >= 0 ? '#10b981' : '#ef4444'};">
+                                            ${avgROI >= 0 ? '+' : ''}${avgROI.toFixed(2)}%
+                                        </div>
+                                    </div>
+                                    ${data.total_profit !== undefined ? `
+                                    <div style="padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                        <div style="font-size: 0.85em; opacity: 0.7;">Lucro Total</div>
+                                        <div style="font-size: 1.2em; font-weight: bold; color: ${data.total_profit >= 0 ? '#10b981' : '#ef4444'};">
+                                            ${data.total_profit >= 0 ? '+' : ''}${data.total_profit.toFixed(4)} SOL
+                                        </div>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div></div>';
+                }
+                
+                // Tokens Ativos - Análise Atual
+                const activeResponse = await fetch('/api/trades/active');
+                const activeTrades = await activeResponse.json();
+                
+                if (activeTrades && activeTrades.length > 0) {
+                    html += '<div style="margin-bottom: 30px;">';
+                    html += '<h3 style="color: rgba(255,255,255,0.9); margin-bottom: 15px; font-size: 1.2em;">🔄 Tokens Ativos - Análise Atual</h3>';
+                    html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">';
+                    
+                    let totalActiveValue = 0;
+                    let totalCurrentValue = 0;
+                    
+                    activeTrades.forEach(trade => {
+                        const entryValue = trade.amount_sol || 0;
+                        const multiple = trade.multiple || 1.0;
+                        const remainingPercent = trade.remaining_percent || 100;
+                        const currentValue = entryValue * multiple * (remainingPercent / 100);
+                        totalActiveValue += entryValue;
+                        totalCurrentValue += currentValue;
+                    });
+                    
+                    const totalPL = totalCurrentValue - totalActiveValue;
+                    const totalPLPercent = totalActiveValue > 0 ? ((totalPL / totalActiveValue) * 100) : 0;
+                    
+                    html += `
+                        <div style="padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                            <div style="font-size: 0.85em; opacity: 0.7; margin-bottom: 5px;">Total Ativos</div>
+                            <div style="font-size: 1.8em; font-weight: bold;">${activeTrades.length}</div>
+                        </div>
+                        <div style="padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                            <div style="font-size: 0.85em; opacity: 0.7; margin-bottom: 5px;">Valor Investido</div>
+                            <div style="font-size: 1.5em; font-weight: bold;">${totalActiveValue.toFixed(4)} SOL</div>
+                        </div>
+                        <div style="padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                            <div style="font-size: 0.85em; opacity: 0.7; margin-bottom: 5px;">Valor Atual</div>
+                            <div style="font-size: 1.5em; font-weight: bold;">${totalCurrentValue.toFixed(4)} SOL</div>
+                        </div>
+                        <div style="padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                            <div style="font-size: 0.85em; opacity: 0.7; margin-bottom: 5px;">Lucro/Perda</div>
+                            <div style="font-size: 1.5em; font-weight: bold; color: ${totalPL >= 0 ? '#10b981' : '#ef4444'};">
+                                ${totalPL >= 0 ? '+' : ''}${totalPL.toFixed(4)} SOL
+                            </div>
+                            <div style="font-size: 1em; color: ${totalPLPercent >= 0 ? '#10b981' : '#ef4444'}; margin-top: 5px;">
+                                ${totalPLPercent >= 0 ? '+' : ''}${totalPLPercent.toFixed(2)}%
+                            </div>
+                        </div>
+                    `;
+                    
+                    html += '</div></div>';
+                }
+                
+                // Top 5 Melhores e Piores (se houver trades vendidos)
+                if (stats.performance_analysis && soldTrades.length > 0) {
+                    const perf = stats.performance_analysis;
+                    
+                    if (perf.best_tokens && perf.best_tokens.length > 0) {
+                        html += '<div style="margin-bottom: 30px;">';
+                        html += '<h3 style="color: rgba(255,255,255,0.9); margin-bottom: 15px; font-size: 1.2em;">🏆 Top 5 Melhores Tokens</h3>';
+                        html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">';
+                        
+                        perf.best_tokens.forEach((token, index) => {
+                            const multiple = token.final_multiple || (token.peak_multiple || 1.0);
+                            html += `
+                                <div style="padding: 15px; background: rgba(16,185,129,0.2); border-radius: 10px; border-left: 4px solid #10b981;">
+                                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                        <div style="font-size: 1.2em; font-weight: bold;">${index + 1}. ${token.symbol || 'N/A'}</div>
+                                    </div>
+                                    <div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 8px;">Score: ${token.score || 'N/A'}</div>
+                                    <div style="font-size: 1.1em; font-weight: bold; color: #10b981; margin-bottom: 5px;">
+                                        ${token.profit_loss >= 0 ? '+' : ''}${token.profit_loss.toFixed(4)} SOL
+                                    </div>
+                                    <div style="font-size: 0.85em; opacity: 0.7; margin-top: 5px;">
+                                        ${multiple.toFixed(2)}x
+                                    </div>
+                                    ${token.time_to_peak ? `
+                                    <div style="font-size: 0.75em; opacity: 0.6; margin-top: 5px;">
+                                        Pico: ${token.time_to_peak.toFixed(1)}min
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        });
+                        
+                        html += '</div></div>';
+                    }
+                    
+                    if (perf.worst_tokens && perf.worst_tokens.length > 0) {
+                        html += '<div>';
+                        html += '<h3 style="color: rgba(255,255,255,0.9); margin-bottom: 15px; font-size: 1.2em;">📉 Top 5 Piores Tokens</h3>';
+                        html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">';
+                        
+                        perf.worst_tokens.forEach((token, index) => {
+                            const multiple = token.final_multiple || (token.peak_multiple || 1.0);
+                            html += `
+                                <div style="padding: 15px; background: rgba(239,68,68,0.2); border-radius: 10px; border-left: 4px solid #ef4444;">
+                                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                        <div style="font-size: 1.2em; font-weight: bold;">${index + 1}. ${token.symbol || 'N/A'}</div>
+                                    </div>
+                                    <div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 8px;">Score: ${token.score || 'N/A'}</div>
+                                    <div style="font-size: 1.1em; font-weight: bold; color: #ef4444; margin-bottom: 5px;">
+                                        ${token.profit_loss >= 0 ? '+' : ''}${token.profit_loss.toFixed(4)} SOL
+                                    </div>
+                                    <div style="font-size: 0.85em; opacity: 0.7; margin-top: 5px;">
+                                        ${multiple.toFixed(2)}x
+                                    </div>
+                                    ${token.time_to_peak ? `
+                                    <div style="font-size: 0.75em; opacity: 0.6; margin-top: 5px;">
+                                        Pico: ${token.time_to_peak.toFixed(1)}min
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        });
+                        
+                        html += '</div></div>';
+                    }
+                }
+                
+                if (!html) {
+                    html = '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">Ainda não há dados suficientes para análise</div>';
+                }
+                
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Erro ao carregar análise de performance:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">Erro ao carregar análise</div>';
+            }
+        }
+        
+        async function loadDaySummary() {
+            const container = document.getElementById('resumoDiaTokens');
+            if (!container) {
+                console.error('Container resumoDiaTokens não encontrado!');
+                return;
+            }
+            
+            try {
+                console.log('Carregando resumo do dia...');
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">Carregando tokens ativos...</div>';
+                
+                const response = await fetch('/api/trades/active');
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
+                const trades = await response.json();
+                console.log(`Resumo do dia: ${trades?.length || 0} trades encontrados`);
+                
+                if (!trades || trades.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6); grid-column: 1 / -1;">
+                            <div style="font-size: 2em; margin-bottom: 15px;">📊</div>
+                            <div style="font-size: 1.2em; margin-bottom: 10px; font-weight: 600;">Nenhum token ativo no momento</div>
+                            <div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 20px;">
+                                Quando o bot comprar tokens, eles aparecerão aqui
+                            </div>
+                            <button onclick="refreshAllTabs()" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                <i class="fas fa-sync-alt"></i> Atualizar
+                            </button>
+                        </div>`;
+                    return;
+                }
+                
+                let html = '';
+                trades.forEach(trade => {
+                    const entryPrice = trade.entry_price || 0;
+                    const currentPrice = trade.current_price || entryPrice;
+                    const multiple = currentPrice > 0 && entryPrice > 0 ? (currentPrice / entryPrice) : 1.0;
+                    const percent = (multiple - 1) * 100;
+                    const profitClass = percent >= 0 ? 'profit' : 'loss';
+                    
+                    const entryValue = trade.amount_sol || 0;
+                    const remainingPercent = trade.remaining_percent || 100;
+                    const currentValue = entryValue * multiple * (remainingPercent / 100);
+                    const soldPercent = 100 - remainingPercent;
+                    
+                    const date = trade.timestamp ? new Date(trade.timestamp) : new Date();
+                    const dateStr = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    
+                    // Calcula tempo decorrido
+                    const timeSince = trade.timestamp ? Math.floor((Date.now() - new Date(trade.timestamp).getTime()) / 60000) : 0;
+                    let timeSinceStr = '';
+                    if (timeSince < 1) {
+                        timeSinceStr = '< 1min';
+                    } else if (timeSince < 60) {
+                        timeSinceStr = `${timeSince}min`;
+                    } else {
+                        const hours = Math.floor(timeSince / 60);
+                        const mins = timeSince % 60;
+                        timeSinceStr = `${hours}h ${mins}min`;
+                    }
+                    
+                    html += `
+                        <div style="background: rgba(255,255,255,0.15); border-radius: 12px; padding: 20px; border: 1px solid rgba(255,255,255,0.2);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                                <div>
+                                    <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 5px;">${trade.symbol || 'N/A'}</div>
+                                    <div style="font-size: 0.9em; opacity: 0.8;">Score: <span class="score-badge">${trade.score || 0}</span></div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 1.8em; font-weight: bold; color: ${profitClass === 'profit' ? '#10b981' : '#ef4444'};">
+                                        ${multiple.toFixed(3)}x
+                                    </div>
+                                    <div style="font-size: 0.9em; color: ${profitClass === 'profit' ? '#10b981' : '#ef4444'};">
+                                        ${percent >= 0 ? '+' : ''}${percent.toFixed(2)}%
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                <div>
+                                    <div style="font-size: 0.85em; opacity: 0.7; margin-bottom: 5px;">Preço Entrada</div>
+                                    <div style="font-size: 1.1em; font-weight: 600;">$${entryPrice.toFixed(8)}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.85em; opacity: 0.7; margin-bottom: 5px;">Preço Atual</div>
+                                    <div style="font-size: 1.1em; font-weight: 600;">$${currentPrice.toFixed(8)}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.85em; opacity: 0.7; margin-bottom: 5px;">Valor Investido</div>
+                                    <div style="font-size: 1.1em; font-weight: 600;">${entryValue.toFixed(6)} SOL</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.85em; opacity: 0.7; margin-bottom: 5px;">Valor Atual</div>
+                                    <div style="font-size: 1.1em; font-weight: 600; color: ${profitClass === 'profit' ? '#10b981' : '#ef4444'};">
+                                        ${currentValue.toFixed(6)} SOL
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9em;">
+                                    <span style="opacity: 0.8;">Segurando</span>
+                                    <span style="font-weight: 600;">${remainingPercent.toFixed(1)}%</span>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.1); border-radius: 10px; height: 20px; overflow: hidden;">
+                                    <div style="background: linear-gradient(90deg, var(--primary), var(--primary-light)); height: 100%; width: ${remainingPercent}%; transition: width 0.3s;"></div>
+                                </div>
+                                ${soldPercent > 0 ? `<div style="font-size: 0.85em; opacity: 0.7; margin-top: 5px;">${soldPercent.toFixed(1)}% vendido</div>` : ''}
+                            </div>
+                            
+                            ${trade.tps_executed && trade.tps_executed.length > 0 ? `
+                            <div style="margin-bottom: 15px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 3px solid #3b82f6;">
+                                <div style="font-size: 0.9em; font-weight: 600; margin-bottom: 8px; color: #3b82f6;">
+                                    📊 Histórico de Vendas (${trade.tps_executed.length})
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    ${trade.tps_executed.map((tp, idx) => {
+                                        let tpText = '';
+                                        let tpType = '🤖 Automático';
+                                        let tpPercent = '';
+                                        let tpPrice = '';
+                                        let tpTime = '';
+                                        
+                                        if (typeof tp === 'string') {
+                                            // Formato antigo: "2x" ou "Manual 50%"
+                                            if (tp.includes('Manual')) {
+                                                tpType = '👤 Manual';
+                                                tpPercent = tp.replace('Manual', '').trim();
+                                            } else {
+                                                tpText = tp;
+                                            }
+                                        } else if (typeof tp === 'object') {
+                                            // Formato novo: {type, percent, price, timestamp}
+                                            if (tp.type && tp.type.includes('manual')) {
+                                                tpType = '👤 Manual';
+                                            }
+                                            tpPercent = tp.percent ? `${tp.percent.toFixed(1)}%` : '';
+                                            tpPrice = tp.price ? `@ $${tp.price.toFixed(8)}` : '';
+                                            if (tp.timestamp) {
+                                                const tpDate = new Date(tp.timestamp);
+                                                tpTime = tpDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                                            }
+                                        }
+                                        
+                                        return `
+                                        <div style="font-size: 0.85em; padding: 6px; background: rgba(255,255,255,0.05); border-radius: 4px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                <div>
+                                                    <span style="opacity: 0.9;">${tpType}</span>
+                                                    ${tpPercent ? `<span style="margin-left: 8px; font-weight: 600;">${tpPercent}</span>` : ''}
+                                                    ${tpText ? `<span style="margin-left: 8px;">${tpText}</span>` : ''}
+                                                    ${tpPrice ? `<span style="margin-left: 8px; opacity: 0.7;">${tpPrice}</span>` : ''}
+                                                </div>
+                                                ${tpTime ? `<div style="opacity: 0.6; font-size: 0.8em;">${tpTime}</div>` : ''}
+                                            </div>
+                                        </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                <div>
+                                    <div style="font-size: 0.85em; opacity: 0.7; margin-bottom: 5px;">Comprado em</div>
+                                    <div style="font-size: 0.9em; font-weight: 600;">${date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
+                                    <div style="font-size: 0.85em; opacity: 0.8;">${timeStr}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.85em; opacity: 0.7; margin-bottom: 5px;">Tempo decorrido</div>
+                                    <div style="font-size: 1em; font-weight: 600; color: ${timeSince < 5 ? '#10b981' : timeSince < 15 ? '#f59e0b' : '#ef4444'};">
+                                        ${timeSinceStr}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.85em; opacity: 0.7; margin-bottom: 5px;">Status</div>
+                                    <div style="background: rgba(139, 92, 246, 0.3); padding: 6px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 600; display: inline-block;">
+                                        <i class="fas fa-sync-alt"></i> Segurando
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button onclick="markTokenAsSold('${trade.contract_address}')" 
+                                    style="width: 100%; margin-top: 15px; background: #10b981; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9em;">
+                                ✅ Marcar como Vendido
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Erro ao carregar resumo do dia:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6); grid-column: 1 / -1;">Erro ao carregar tokens</div>';
+            }
+        }
+        
+        async function loadBuyAmounts() {
+            try {
+                const response = await fetch('/api/buy-config');
+                const config = await response.json();
+                
+                if (config.error) {
+                    document.getElementById('buyConfigSaveResult').innerHTML = 
+                        `<div style="color: #ef4444; padding: 10px; background: rgba(239,68,68,0.2); border-radius: 6px;">Erro: ${config.error}</div>`;
+                    document.getElementById('buyConfigSaveResult').style.display = 'block';
+                    return;
+                }
+                
+                const amounts = config.buy_amounts || {};
+                const times = config.max_times || {};
+                
+                document.getElementById('amountSol15_17').value = amounts.amount_sol_15_17 || 0.05;
+                document.getElementById('maxTime15_17').value = times.max_time_minutes_15_17 || 3;
+                document.getElementById('amountSol18_19').value = amounts.amount_sol_18_19 || 0.03;
+                document.getElementById('maxTime18_19').value = times.max_time_minutes_18_19 || 5;
+                document.getElementById('amountSol20_21').value = amounts.amount_sol_20_21 || 0.02;
+                document.getElementById('maxTime20_21').value = times.max_time_minutes_20_21 || 1;
+                document.getElementById('amountSolLow').value = amounts.amount_sol_low || 0.01;
+                document.getElementById('enableLowScore').checked = amounts.enable_low_score || false;
+            } catch (error) {
+                console.error('Erro ao carregar valores de compra:', error);
+                showToast('Erro ao carregar valores de compra', 'error');
+            }
+        }
+        
+        async function saveBuyAmounts() {
+            try {
+                const buyAmounts = {
+                    amount_sol_15_17: parseFloat(document.getElementById('amountSol15_17').value) || 0.05,
+                    amount_sol_18_19: parseFloat(document.getElementById('amountSol18_19').value) || 0.03,
+                    amount_sol_20_21: parseFloat(document.getElementById('amountSol20_21').value) || 0.02,
+                    amount_sol_low: parseFloat(document.getElementById('amountSolLow').value) || 0.01,
+                    enable_low_score: document.getElementById('enableLowScore').checked
+                };
+                
+                const maxTimes = {
+                    max_time_minutes_15_17: parseInt(document.getElementById('maxTime15_17').value) || 3,
+                    max_time_minutes_18_19: parseInt(document.getElementById('maxTime18_19').value) || 5,
+                    max_time_minutes_20_21: parseInt(document.getElementById('maxTime20_21').value) || 1
+                };
+                
+                const response = await fetch('/api/buy-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        buy_amounts: buyAmounts,
+                        max_times: maxTimes
+                    })
+                });
+                
+                const result = await response.json();
+                const resultDiv = document.getElementById('buyConfigSaveResult');
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<div style="color: #10b981; padding: 10px; background: rgba(16,185,129,0.2); border-radius: 6px;">✅ Valores de compra salvos! O bot usará esses valores automaticamente.</div>';
+                    resultDiv.style.display = 'block';
+                    showToast('Valores de compra salvos com sucesso!', 'success');
+                    setTimeout(() => refreshAllTabs(), 500); // Atualiza todas as abas
+                } else {
+                    resultDiv.innerHTML = `<div style="color: #ef4444; padding: 10px; background: rgba(239,68,68,0.2); border-radius: 6px;">Erro: ${result.error || 'Erro desconhecido'}</div>`;
+                    resultDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Erro ao salvar valores de compra:', error);
+                document.getElementById('buyConfigSaveResult').innerHTML = 
+                    `<div style="color: #ef4444; padding: 10px; background: rgba(239,68,68,0.2); border-radius: 6px;">Erro: ${error.message}</div>`;
+                document.getElementById('buyConfigSaveResult').style.display = 'block';
+            }
+        }
+        
+        async function loadSoldTrades() {
+            const container = document.getElementById('soldTrades');
+            if (!container) return;
+            
+            try {
+                const response = await fetch('/api/trades/sold');
+                const trades = await response.json();
+                
+                if (!trades || trades.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6)">Nenhum trade vendido</div>';
+                    return;
+                }
+                
+                // Ordena por data (mais recentes primeiro)
+                trades.sort((a, b) => {
+                    const dateA = a.sold_at ? new Date(a.sold_at) : (a.timestamp ? new Date(a.timestamp) : new Date(0));
+                    const dateB = b.sold_at ? new Date(b.sold_at) : (b.timestamp ? new Date(b.timestamp) : new Date(0));
+                    return dateB - dateA;
+                });
+                
+                let html = '<table class="trades-table"><thead><tr>';
+                html += '<th>Token</th><th>Score</th><th>Entrada</th><th>Saída</th><th>Múltiplo</th><th>%</th><th>Lucro (SOL)</th><th>Comprado</th><th>Vendido</th><th>Tempo até Venda</th><th>Motivo</th></tr></thead><tbody>';
+                
+                trades.forEach(trade => {
+                    const profitLoss = trade.profit_loss_sol || 0;
+                    const profitClass = profitLoss >= 0 ? 'profit' : 'loss';
+                    const percent = trade.profit_loss_percent || trade.percent_change || 0;
+                    
+                    const entryPrice = trade.entry_price || 0;
+                    const finalPrice = trade.final_price || trade.average_sell_price || 0;
+                    const multiple = entryPrice > 0 ? (finalPrice / entryPrice).toFixed(3) : '0.000';
+                    
+                    // Mostra preço médio se houver múltiplas vendas
+                    const hasMultipleSales = trade.tps_executed && trade.tps_executed.length > 0;
+                    const averagePrice = trade.average_sell_price || finalPrice;
+                    const priceDisplay = hasMultipleSales && trade.average_sell_price ? 
+                        `$${averagePrice.toFixed(8)} <span style="font-size: 0.75em; opacity: 0.7;">(médio)</span>` : 
+                        `$${finalPrice.toFixed(8)}`;
+                    
+                    // Horário de compra
+                    const buyDate = trade.timestamp ? new Date(trade.timestamp) : null;
+                    const buyDateStr = buyDate ? buyDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + buyDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'N/A';
+                    
+                    // Horário de venda
+                    const sellDate = trade.sold_at ? new Date(trade.sold_at) : null;
+                    const sellDateStr = sellDate ? sellDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + sellDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'N/A';
+                    
+                    // Tempo até venda - SEMPRE calcula a partir das datas para garantir precisão
+                    let timeToSellStr = 'N/A';
+                    let timeToSellMinutes = null;
+                    
+                    if (buyDate && sellDate && !isNaN(buyDate.getTime()) && !isNaN(sellDate.getTime())) {
+                        // SEMPRE calcula a partir das datas (mais confiável)
+                        const diffMs = sellDate.getTime() - buyDate.getTime();
+                        timeToSellMinutes = diffMs / (1000 * 60); // minutos
+                    } else if (trade.time_to_sell !== undefined && trade.time_to_sell !== null) {
+                        // Fallback: usa o valor salvo apenas se não tiver datas
+                        timeToSellMinutes = trade.time_to_sell;
+                    }
+                    
+                    // Formata o tempo
+                    if (timeToSellMinutes !== null && !isNaN(timeToSellMinutes) && timeToSellMinutes >= 0) {
+                        if (timeToSellMinutes < 1) {
+                            timeToSellStr = '< 1min';
+                        } else if (timeToSellMinutes < 60) {
+                            timeToSellStr = `${Math.round(timeToSellMinutes)}min`;
+                        } else {
+                            const hours = Math.floor(timeToSellMinutes / 60);
+                            const mins = Math.round(timeToSellMinutes % 60);
+                            timeToSellStr = `${hours}h ${mins}min`;
+                        }
+                    }
+                    
+                    const reason = trade.sell_reason || 'manual';
+                    const isPartialSale = trade.is_partial_sale || (trade.total_sold_percent && trade.total_sold_percent < 100);
+                    const remainingAfterSale = trade.remaining_percent_after_sale || (trade.total_sold_percent ? (100 - trade.total_sold_percent) : 0);
+                    
+                    const reasonText = {
+                        'manual': 'Manual',
+                        'manual_partial': 'Manual (Parcial)',
+                        'take_profit': 'Take Profit',
+                        'stop_loss_time': 'Stop Loss (Tempo)',
+                        'stop_loss_time_failed': 'Stop Loss (Falhou)',
+                        'stop_loss_percent': 'Stop Loss (Queda)'
+                    }[reason] || reason;
+                    
+                    // Adiciona indicador de venda parcial
+                    const partialIndicator = isPartialSale ? 
+                        `<span style="font-size: 0.75em; color: #f59e0b; margin-left: 5px;">⚠️ Parcial (${trade.total_sold_percent?.toFixed(1) || 'N/A'}% vendido, ${remainingAfterSale.toFixed(1)}% restante)</span>` : 
+                        '';
+                    
+                    // Histórico de vendas parciais com preços
+                    let salesHistoryHtml = '';
+                    if (trade.tps_executed && trade.tps_executed.length > 0) {
+                        salesHistoryHtml = '<div style="margin-top: 5px; font-size: 0.75em; opacity: 0.8;">';
+                        trade.tps_executed.forEach((tp) => {
+                            let tpText = '';
+                            let tpType = '🤖';
+                            let tpPercent = '';
+                            let tpPrice = '';
+                            
+                            if (typeof tp === 'string') {
+                                if (tp.includes('Manual')) {
+                                    tpType = '👤';
+                                    tpPercent = tp.replace('Manual', '').trim();
+                                } else {
+                                    tpText = tp;
+                                }
+                            } else if (typeof tp === 'object') {
+                                if (tp.type && tp.type.includes('manual')) {
+                                    tpType = '👤';
+                                }
+                                tpPercent = tp.percent ? `${tp.percent.toFixed(1)}%` : '';
+                                tpPrice = tp.price ? `@ $${tp.price.toFixed(8)}` : '';
+                                tpText = tp.type || '';
+                            }
+                            
+                            salesHistoryHtml += `<div style="margin-top: 2px;">${tpType} ${tpPercent || tpText} ${tpPrice}</div>`;
+                        });
+                        // Adiciona venda final se houver
+                        if (finalPrice > 0 && trade.tps_executed.length > 0) {
+                            const totalSoldInTPs = trade.tps_executed.reduce((sum, tp) => {
+                                if (typeof tp === 'object' && tp.percent) return sum + tp.percent;
+                                return sum;
+                            }, 0);
+                            const remainingSold = 100 - totalSoldInTPs;
+                            if (remainingSold > 0.1) {
+                                salesHistoryHtml += `<div style="margin-top: 2px;">👤 ${remainingSold.toFixed(1)}% @ $${finalPrice.toFixed(8)}</div>`;
+                            }
+                        }
+                        salesHistoryHtml += '</div>';
+                    }
+                    
+                    html += `<tr ${isPartialSale ? 'style="background: rgba(245, 158, 11, 0.1);"' : ''}>
+                        <td>
+                            <strong>${trade.symbol || 'N/A'}</strong>
+                            ${partialIndicator}
+                            ${salesHistoryHtml}
+                            ${trade.average_sell_price ? `<div style="margin-top: 3px; font-size: 0.7em; opacity: 0.7; color: #3b82f6;">💰 Preço médio: $${trade.average_sell_price.toFixed(8)}</div>` : ''}
+                        </td>
+                        <td><span class="score-badge">${trade.score || 0}</span></td>
+                        <td>$${entryPrice.toFixed(8)}</td>
+                        <td>${priceDisplay}</td>
+                        <td class="${profitClass}">${multiple}x</td>
+                        <td class="${profitClass}">${percent >= 0 ? '+' : ''}${percent.toFixed(2)}%</td>
+                        <td class="${profitClass}">${profitLoss >= 0 ? '+' : ''}${profitLoss.toFixed(4)} SOL</td>
+                        <td style="font-size: 0.85em;">${buyDateStr}</td>
+                        <td style="font-size: 0.85em;">${sellDateStr}</td>
+                        <td style="font-size: 0.85em; color: ${timeToSellMinutes !== null && timeToSellMinutes < 5 ? '#10b981' : timeToSellMinutes !== null && timeToSellMinutes < 15 ? '#f59e0b' : '#ef4444'};">
+                            ${timeToSellStr}
+                        </td>
+                        <td><span style="font-size: 0.85em; opacity: 0.8;">${reasonText}</span></td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Erro ao carregar trades vendidos:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6)">Erro ao carregar trades vendidos</div>';
+            }
+        }
+        
+        async function updateSellPrices() {
+            showToast('Atualizando preços...', 'info');
+            // Implementação básica - pode ser expandida
+            await loadSoldTrades();
+            showToast('Preços atualizados!', 'success');
+        }
+        
+        function filterActiveTrades() {
+            const filter = document.getElementById('activeFilter').value;
+            
+            if (!allActiveTrades || allActiveTrades.length === 0) {
+                return;
+            }
+            
+            let filtered = allActiveTrades;
+            
+            if (filter === 'profit') {
+                // Apenas tokens em lucro (percent_change >= 0)
+                filtered = allActiveTrades.filter(trade => {
+                    const percent = trade.percent_change || 0;
+                    return percent >= 0;
+                });
+            } else if (filter === 'loss') {
+                // Apenas tokens em prejuízo (percent_change < 0)
+                filtered = allActiveTrades.filter(trade => {
+                    const percent = trade.percent_change || 0;
+                    return percent < 0;
+                });
+            }
+            // Se filter === 'all', usa todos os trades (já está em filtered)
+            
+            renderActiveTrades(filtered);
+        }
+        
+        // Variável global para armazenar todos os tokens detectados
+        let allDetectedTokens = [];
+        
+        // Variável global para armazenar todos os trades ativos (para filtros)
+        let allActiveTrades = [];
+        
+        async function loadIntelligence() {
+            const container = document.getElementById('intelligenceContent');
+            if (!container) return;
+            
+            try {
+                container.innerHTML = '<div class="loading">Analisando dados de tokens detectados...</div>';
+                
+                const response = await fetch('/api/intelligence');
+                const data = await response.json();
+                
+                if (!data.enough_data) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #6b7280;">
+                            <i class="fas fa-info-circle" style="font-size: 3em; margin-bottom: 20px; opacity: 0.5;"></i>
+                            <h3 style="color: #1f2937; margin-bottom: 10px;">Dados Insuficientes</h3>
+                            <p>${data.message || 'Precisa de pelo menos 10 tokens detectados para análise'}</p>
+                            <p style="margin-top: 20px; font-size: 0.9em; opacity: 0.8;">
+                                Continue usando o bot para coletar mais dados e análises serão geradas automaticamente.
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                
+                // Resumo Geral
+                html += '<div style="margin-bottom: 30px; padding: 20px; background: #f0f9ff; border-radius: 10px; border-left: 4px solid #3b82f6;">';
+                html += '<h3 style="color: #1e40af; margin-bottom: 15px;"><i class="fas fa-chart-line"></i> Resumo da Análise</h3>';
+                html += `<p style="color: #1f2937; margin-bottom: 10px;"><strong>Tokens Analisados:</strong> ${data.total_tokens_analyzed}</p>`;
+                if (data.general_analysis && data.general_analysis.avg_time_to_peak_all_scores) {
+                    html += `<p style="color: #1f2937; margin-bottom: 10px;"><strong>Tempo Médio até Pico:</strong> ${data.general_analysis.avg_time_to_peak_all_scores} minutos</p>`;
+                    html += `<p style="color: #1f2937; margin-bottom: 10px;"><strong>Múltiplo Médio de Pico:</strong> ${data.general_analysis.avg_peak_multiple}x</p>`;
+                }
+                html += '</div>';
+                
+                // Análise por Score
+                if (data.score_analysis && Object.keys(data.score_analysis).length > 0) {
+                    html += '<div style="margin-bottom: 30px;">';
+                    html += '<h3 style="color: #3b82f6; margin-bottom: 20px; font-size: 1.3em;"><i class="fas fa-star"></i> Análise por Score</h3>';
+                    html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">';
+                    
+                    // Ordena scores
+                    const scores = Object.keys(data.score_analysis).sort((a, b) => parseInt(b) - parseInt(a));
+                    
+                    for (const score of scores) {
+                        const analysis = data.score_analysis[score];
+                        const successColor = analysis.success_rate_percent >= 50 ? '#10b981' : '#ef4444';
+                        
+                        html += `
+                            <div style="padding: 20px; background: #ffffff; border-radius: 10px; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <h4 style="color: #3b82f6; margin-bottom: 15px; font-size: 1.2em;">Score ${score}</h4>
+                                <div style="display: grid; gap: 12px;">
+                                    <div>
+                                        <div style="font-size: 0.85em; color: #6b7280; margin-bottom: 5px;">Tokens Analisados</div>
+                                        <div style="font-size: 1.5em; font-weight: bold; color: #1f2937;">${analysis.token_count}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.85em; color: #6b7280; margin-bottom: 5px;">Taxa de Sucesso</div>
+                                        <div style="font-size: 1.5em; font-weight: bold; color: ${successColor};">${analysis.success_rate_percent.toFixed(1)}%</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.85em; color: #6b7280; margin-bottom: 5px;">Tempo Médio até Pico</div>
+                                        <div style="font-size: 1.3em; font-weight: bold; color: #1f2937;">${analysis.avg_time_to_peak_minutes} min</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.85em; color: #6b7280; margin-bottom: 5px;">Múltiplo Médio de Pico</div>
+                                        <div style="font-size: 1.3em; font-weight: bold; color: #10b981;">${analysis.avg_peak_multiple}x</div>
+                                    </div>
+                                    ${analysis.avg_time_to_drop_minutes ? `
+                                    <div>
+                                        <div style="font-size: 0.85em; color: #6b7280; margin-bottom: 5px;">Tempo Médio até Queda</div>
+                                        <div style="font-size: 1.3em; font-weight: bold; color: #ef4444;">${analysis.avg_time_to_drop_minutes} min</div>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div></div>';
+                }
+                
+                // Sugestões
+                if (data.suggestions) {
+                    html += '<div style="margin-bottom: 30px; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white;">';
+                    html += '<h3 style="margin-bottom: 20px; font-size: 1.3em;"><i class="fas fa-lightbulb"></i> Sugestões de Configuração</h3>';
+                    html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">';
+                    
+                    if (data.suggestions.stop_loss_time) {
+                        html += `
+                            <div style="padding: 20px; background: rgba(255,255,255,0.2); border-radius: 8px;">
+                                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 10px;">Stop Loss por Tempo</div>
+                                <div style="font-size: 2em; font-weight: bold; margin-bottom: 5px;">${data.suggestions.stop_loss_time} min</div>
+                                <div style="font-size: 0.85em; opacity: 0.8;">Baseado no tempo médio até pico</div>
+                            </div>
+                        `;
+                    }
+                    
+                    if (data.suggestions.take_profit_multiple) {
+                        html += `
+                            <div style="padding: 20px; background: rgba(255,255,255,0.2); border-radius: 8px;">
+                                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 10px;">Take Profit Sugerido</div>
+                                <div style="font-size: 2em; font-weight: bold; margin-bottom: 5px;">${data.suggestions.take_profit_multiple}x</div>
+                                <div style="font-size: 0.85em; opacity: 0.8;">70% do múltiplo médio de pico</div>
+                            </div>
+                        `;
+                    }
+                    
+                    if (data.suggestions.best_scores && data.suggestions.best_scores.length > 0) {
+                        html += `
+                            <div style="padding: 20px; background: rgba(255,255,255,0.2); border-radius: 8px;">
+                                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 10px;">Melhores Scores</div>
+                                <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 5px;">${data.suggestions.best_scores.join(', ')}</div>
+                                <div style="font-size: 0.85em; opacity: 0.8;">Maior taxa de sucesso</div>
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div></div>';
+                }
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Erro ao carregar inteligência:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #ef4444;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3em; margin-bottom: 20px;"></i>
+                        <h3>Erro ao carregar análise</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function loadDetectedTokens() {
+            const container = document.getElementById('detectedTokensContent');
+            if (!container) {
+                console.error('Container detectedTokensContent não encontrado!');
+                return;
+            }
+            
+            try {
+                console.log('Carregando tokens detectados...');
+                container.innerHTML = '<div class="loading">Carregando tokens detectados...</div>';
+                
+                const response = await fetch('/api/detected-tokens?limit=200');
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                allDetectedTokens = data.tokens || [];
+                console.log(`Tokens detectados: ${allDetectedTokens.length} tokens encontrados`);
+                
+                if (allDetectedTokens.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 40px; color: #6b7280">Nenhum token detectado ainda</div>';
+                    return;
+                }
+                
+                // Renderiza tokens (com filtros aplicados) - sem atualizar preços automaticamente para não demorar
+                filterDetectedTokens();
+                console.log('Tokens detectados carregados com sucesso!');
+                
+                // Atualiza preços em background (apenas os primeiros 20 para não sobrecarregar)
+                updateAllTokenPrices().catch(e => console.error('Erro ao atualizar preços:', e));
+            } catch (error) {
+                console.error('Erro ao carregar tokens detectados:', error);
+                const errorMsg = error.message || 'Erro desconhecido';
+                container.innerHTML = `<div style="text-align: center; padding: 40px; color: #ef4444;">
+                    <div style="font-size: 1.2em; margin-bottom: 10px;">❌ Erro ao carregar tokens detectados</div>
+                    <div style="font-size: 0.9em; opacity: 0.8;">${errorMsg}</div>
+                    <button onclick="loadDetectedTokens()" style="margin-top: 15px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                        Tentar novamente
+                    </button>
+                </div>`;
+            }
+        }
+        
+        async function updateAllTokenPrices() {
+            // Atualiza preços dos primeiros 20 tokens (para não sobrecarregar)
+            // Filtra tokens de teste e inválidos
+            const tokensToUpdate = allDetectedTokens
+                .filter(token => {
+                    const ca = token.contract_address || '';
+                    // Ignora tokens de teste ou endereços muito curtos
+                    return !ca.startsWith('CA_TEST') && ca.length >= 32;
+                })
+                .slice(0, 20);
+            
+            const updatePromises = tokensToUpdate.map(async token => {
+                try {
+                    const response = await fetch(`/api/detected-tokens/${token.contract_address}/update-price`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ price: 0 })
+                    });
+                    const data = await response.json();
+                    // Se tiver flag 'skip', ignora silenciosamente
+                    return data.skip ? null : data;
+                } catch (err) {
+                    // Ignora erros individuais silenciosamente
+                    return null;
+                }
+            });
+            
+            // Atualiza em paralelo
+            await Promise.all(updatePromises);
+            
+            // Recarrega lista atualizada
+            const response = await fetch('/api/detected-tokens?limit=200');
+            const data = await response.json();
+            allDetectedTokens = data.tokens || [];
+        }
+        
+        function filterDetectedTokens() {
+            const searchTerm = (document.getElementById('detectedSearchInput')?.value || '').toLowerCase();
+            const scoreFilter = document.getElementById('detectedScoreFilter')?.value || 'all';
+            const statusFilter = document.getElementById('detectedStatusFilter')?.value || 'all';
+            const performanceFilter = document.getElementById('detectedPerformanceFilter')?.value || 'all';
+            
+            let filtered = allDetectedTokens.filter(token => {
+                // Busca
+                if (searchTerm) {
+                    const symbolMatch = (token.symbol || '').toLowerCase().includes(searchTerm);
+                    const caMatch = (token.contract_address || '').toLowerCase().includes(searchTerm);
+                    if (!symbolMatch && !caMatch) return false;
+                }
+                
+                // Filtro de score
+                if (scoreFilter !== 'all') {
+                    const score = token.score || 0;
+                    if (scoreFilter === '15-17' && (score < 15 || score > 17)) return false;
+                    if (scoreFilter === '18-19' && (score < 18 || score > 19)) return false;
+                    if (scoreFilter === '20-21' && (score < 20 || score > 21)) return false;
+                    if (scoreFilter === 'low' && score >= 15) return false;
+                }
+                
+                // Filtro de status
+                if (statusFilter === 'bought' && !token.was_bought) return false;
+                if (statusFilter === 'not_bought' && token.was_bought) return false;
+                
+                // Filtro de performance
+                if (performanceFilter !== 'all') {
+                    const multiple = token.current_multiple || (token.initial_price > 0 && token.current_price ? token.current_price / token.initial_price : 1.0);
+                    if (performanceFilter === 'profit' && multiple < 1.0) return false;
+                    if (performanceFilter === 'loss' && multiple >= 1.0) return false;
+                    if (performanceFilter === 'high' && multiple < 2.0) return false;
+                }
+                
+                return true;
+            });
+            
+            renderDetectedTokens(filtered);
+        }
+        
+        function renderDetectedTokens(tokens) {
+            const container = document.getElementById('detectedTokensContent');
+            if (!container) return;
+            
+            if (tokens.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #6b7280">Nenhum token encontrado com os filtros selecionados</div>';
+                return;
+            }
+            
+            let html = `<div style="margin-bottom: 15px; color: #6b7280; font-size: 0.9em;">
+                Mostrando ${tokens.length} de ${allDetectedTokens.length} tokens
+            </div>
+            <div style="display: grid; gap: 20px;">`;
+                
+            tokens.forEach(token => {
+                const detectedAt = token.detected_at ? new Date(token.detected_at) : new Date();
+                const detectedStr = detectedAt.toLocaleDateString('pt-BR') + ' ' + detectedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                
+                const initialPrice = token.initial_price || 0;
+                const currentPrice = token.current_price || initialPrice;
+                const multiple = token.current_multiple || (initialPrice > 0 ? currentPrice / initialPrice : 1.0);
+                const percent = (multiple - 1) * 100;
+                const profitClass = percent >= 0 ? 'profit' : 'loss';
+                
+                const maxMultiple = token.max_multiple || 1.0;
+                const minMultiple = token.min_multiple || 1.0;
+                
+                const now = new Date();
+                const minutesSince = Math.floor((now - detectedAt) / 60000);
+                
+                html += `
+                    <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                            <div>
+                                <div style="font-size: 1.5em; font-weight: bold; color: #1f2937; margin-bottom: 5px;">
+                                    ${token.symbol || 'N/A'}
+                                    ${token.was_bought ? '<span style="background: #10b981; color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.6em; margin-left: 10px;">COMPRADO</span>' : ''}
+                                </div>
+                                <div style="font-size: 0.9em; color: #6b7280;">
+                                    Score: <span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 12px; font-size: 0.85em; font-weight: 600;">${token.score || 0}</span>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.8em; font-weight: bold; color: ${profitClass === 'profit' ? '#10b981' : '#ef4444'};">
+                                    ${multiple.toFixed(3)}x
+                                </div>
+                                <div style="font-size: 0.9em; color: ${profitClass === 'profit' ? '#10b981' : '#ef4444'};">
+                                    ${percent >= 0 ? '+' : ''}${percent.toFixed(2)}%
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div>
+                                <div style="font-size: 0.85em; color: #6b7280; margin-bottom: 5px;">Preço Inicial</div>
+                                <div style="font-size: 1.1em; font-weight: 600; color: #1f2937;">$${initialPrice.toFixed(8)}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85em; color: #6b7280; margin-bottom: 5px;">Preço Atual</div>
+                                <div style="font-size: 1.1em; font-weight: 600; color: #1f2937;">$${currentPrice.toFixed(8)}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85em; color: #6b7280; margin-bottom: 5px;">Máximo Atingido</div>
+                                <div style="font-size: 1.1em; font-weight: 600; color: #10b981;">${maxMultiple.toFixed(3)}x</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85em; color: #6b7280; margin-bottom: 5px;">Mínimo Atingido</div>
+                                <div style="font-size: 1.1em; font-weight: 600; color: #ef4444;">${minMultiple.toFixed(3)}x</div>
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 15px; background: #f9fafb; border-radius: 8px; margin-bottom: 15px;">
+                            <div style="font-size: 0.85em; color: #6b7280; margin-bottom: 5px;">Contract Address</div>
+                            <div style="font-family: monospace; font-size: 0.85em; color: #1f2937; word-break: break-all;">${token.contract_address}</div>
+                            <button onclick="copyToClipboard('${token.contract_address}')" 
+                                    style="margin-top: 8px; padding: 6px 12px; background: #3b82f6; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.85em;">
+                                <i class="fas fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 1px solid #e5e7eb; font-size: 0.85em; color: #6b7280;">
+                            <div>
+                                <i class="fas fa-clock"></i> Detectado há ${minutesSince} min (${detectedStr})
+                            </div>
+                            <button onclick="updateTokenPrice('${token.contract_address}')" 
+                                    style="padding: 6px 12px; background: #3b82f6; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.85em;">
+                                <i class="fas fa-sync-alt"></i> Atualizar Preço
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div></div>';
+            container.innerHTML = html;
+        }
+        
+        async function updateTokenPrice(ca) {
+            // Validação: ignora tokens de teste
+            if (ca.startsWith('CA_TEST') || ca.length < 32) {
+                showToast('Token de teste - preço não disponível', 'info');
+                return;
+            }
+            
+            try {
+                showToast('Atualizando preço...', 'info');
+                const response = await fetch(`/api/detected-tokens/${ca}/update-price`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ price: 0 }) // O servidor busca o preço
+                });
+                
+                const data = await response.json();
+                
+                // Se tiver flag 'skip', ignora silenciosamente
+                if (data.skip) {
+                    return;
+                }
+                
+                if (response.ok && data.success) {
+                    showToast('Preço atualizado!', 'success');
+                    // Recarrega lista atualizada
+                    const refreshResponse = await fetch('/api/detected-tokens?limit=200');
+                    const refreshData = await refreshResponse.json();
+                    allDetectedTokens = refreshData.tokens || [];
+                    filterDetectedTokens(); // Aplica filtros e re-renderiza
+                } else {
+                    // Não mostra erro para tokens de teste ou inválidos
+                    if (!data.skip) {
+                        showToast('Erro: ' + (data.error || 'Erro desconhecido'), 'error');
+                    }
+                }
+            } catch (error) {
+                // Ignora erros de rede silenciosamente para tokens de teste
+                if (!ca.startsWith('CA_TEST')) {
+                    showToast('Erro ao atualizar preço: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        function exportDetectedTokens() {
+            try {
+                const tokens = allDetectedTokens;
+                if (tokens.length === 0) {
+                    showToast('Nenhum token para exportar', 'warning');
+                    return;
+                }
+                
+                // Cabeçalho CSV
+                let csv = 'Símbolo,Score,Preço Inicial,Preço Atual,Múltiplo,%,Máximo,Mínimo,Comprado,Detectado Em,Contract Address\n';
+                
+                tokens.forEach(token => {
+                    const detectedAt = token.detected_at ? new Date(token.detected_at).toLocaleString('pt-BR') : '';
+                    const initialPrice = token.initial_price || 0;
+                    const currentPrice = token.current_price || initialPrice;
+                    const multiple = token.current_multiple || (initialPrice > 0 ? currentPrice / initialPrice : 1.0);
+                    const percent = (multiple - 1) * 100;
+                    const maxMultiple = token.max_multiple || 1.0;
+                    const minMultiple = token.min_multiple || 1.0;
+                    const wasBought = token.was_bought ? 'Sim' : 'Não';
+                    
+                    csv += `"${token.symbol || 'N/A'}",${token.score || 0},${initialPrice},${currentPrice},${multiple.toFixed(3)},${percent.toFixed(2)}%,${maxMultiple.toFixed(3)},${minMultiple.toFixed(3)},"${wasBought}","${detectedAt}","${token.contract_address}"\n`;
+                });
+                
+                // Cria download
+                const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `tokens_detectados_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showToast('Exportado com sucesso!', 'success');
+            } catch (error) {
+                showToast('Erro ao exportar: ' + error.message, 'error');
+            }
+        }
+        
+        function exportSoldTrades() {
+            try {
+                // Busca trades vendidos
+                fetch('/api/trades/sold')
+                    .then(r => r.json())
+                    .then(trades => {
+                        if (!trades || trades.length === 0) {
+                            showToast('Nenhum trade vendido para exportar', 'warning');
+                            return;
+                        }
+                        
+                        // Cabeçalho CSV
+                        let csv = 'Símbolo,Score,Preço Entrada,Preço Saída,Múltiplo,%,Lucro (SOL),Motivo,Data Venda,Contract Address\n';
+                        
+                        trades.forEach(trade => {
+                            const entryPrice = trade.entry_price || 0;
+                            const finalPrice = trade.final_price || 0;
+                            const multiple = entryPrice > 0 ? (finalPrice / entryPrice).toFixed(3) : '0.000';
+                            const percent = trade.profit_loss_percent || trade.percent_change || 0;
+                            const profitLoss = trade.profit_loss_sol || 0;
+                            const reason = trade.sell_reason || 'manual';
+                            const dateStr = trade.sold_at ? new Date(trade.sold_at).toLocaleString('pt-BR') : (trade.timestamp ? new Date(trade.timestamp).toLocaleString('pt-BR') : '');
+                            
+                            csv += `"${trade.symbol || 'N/A'}",${trade.score || 0},${entryPrice},${finalPrice},${multiple},${percent.toFixed(2)}%,${profitLoss.toFixed(4)},${reason},"${dateStr}","${trade.contract_address}"\n`;
+                        });
+                        
+                        // Cria download
+                        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        const url = URL.createObjectURL(blob);
+                        link.setAttribute('href', url);
+                        link.setAttribute('download', `trades_vendidos_${new Date().toISOString().split('T')[0]}.csv`);
+                        link.style.visibility = 'hidden';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        showToast('Exportado com sucesso!', 'success');
+                    })
+                    .catch(error => {
+                        showToast('Erro ao exportar: ' + error.message, 'error');
+                    });
+            } catch (error) {
+                showToast('Erro ao exportar: ' + error.message, 'error');
+            }
+        }
+        
+        async function loadBlacklist() {
+            const container = document.getElementById('blacklistContent');
+            if (!container) return;
+            
+            try {
+                const response = await fetch('/api/blacklist');
+                const data = await response.json();
+                const addresses = data.addresses || [];
+                
+                if (addresses.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.6)">Nenhum token na blacklist</div>';
+                    return;
+                }
+                
+                let html = '<div style="display: grid; gap: 10px;">';
+                addresses.forEach(addr => {
+                    html += `
+                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-family: monospace; font-size: 0.9em; word-break: break-all;">${addr}</div>
+                            <button onclick="removeFromBlacklist('${addr}')" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em;">
+                                Remover
+                            </button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Erro ao carregar blacklist:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.6)">Erro ao carregar blacklist</div>';
+            }
+        }
+        
+        async function addToBlacklist() {
+            const ca = document.getElementById('blacklistCA').value.trim();
+            if (!ca) {
+                showToast('Por favor, informe a Contract Address', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/blacklist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contract_address: ca })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    showToast('Token adicionado à blacklist!', 'success');
+                    document.getElementById('blacklistCA').value = '';
+                    setTimeout(() => refreshAllTabs(), 500); // Atualiza todas as abas
+                } else {
+                    showToast('Erro: ' + (data.error || 'Erro desconhecido'), 'error');
+                }
+            } catch (error) {
+                showToast('Erro ao adicionar à blacklist: ' + error.message, 'error');
+            }
+        }
+        
+        async function removeFromBlacklist(address) {
+            try {
+                const response = await fetch(`/api/blacklist/${address}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    showToast('Token removido da blacklist!', 'success');
+                    setTimeout(() => refreshAllTabs(), 500); // Atualiza todas as abas
+                } else {
+                    showToast('Erro: ' + (data.error || 'Erro desconhecido'), 'error');
+                }
+            } catch (error) {
+                showToast('Erro ao remover da blacklist: ' + error.message, 'error');
+            }
+        }
+        
+        function toggleRealtimeMonitoring() {
+            showToast('Funcionalidade em desenvolvimento', 'info');
+        }
+        
+        async function loadTradingConfig() {
+            try {
+                const response = await fetch('/api/trading-config');
+                const config = await response.json();
+                
+                if (config.error) {
+                    document.getElementById('configSaveResult').innerHTML = 
+                        `<div style="color: #ef4444; padding: 10px; background: #fee; border-radius: 6px;">Erro: ${config.error}</div>`;
+                    document.getElementById('configSaveResult').style.display = 'block';
+                    return;
+                }
+                
+                // Carrega stop loss
+                const stopLoss = config.stop_loss || {};
+                document.getElementById('stopLossTime').value = stopLoss.time_minutes || 5;
+                document.getElementById('stopLossMinMultiple').value = stopLoss.min_multiple || 1.0;
+                document.getElementById('stopLossPercentEnabled').checked = stopLoss.percent_drop_enabled || false;
+                document.getElementById('stopLossPercentThreshold').value = stopLoss.percent_drop_threshold || 20;
+                
+                const percentConfig = document.getElementById('stopLossPercentConfig');
+                if (percentConfig) {
+                    percentConfig.style.display = stopLoss.percent_drop_enabled ? 'block' : 'none';
+                }
+                
+                // Carrega take profits
+                renderTPConfig('15-17', config.take_profits?.score_15_17 || []);
+                renderTPConfig('18-19', config.take_profits?.score_18_19 || []);
+                renderTPConfig('20-21', config.take_profits?.score_20_21 || []);
+                
+            } catch (error) {
+                console.error('Erro ao carregar configurações:', error);
+                document.getElementById('configSaveResult').innerHTML = 
+                    `<div style="color: #ef4444; padding: 10px; background: #fee; border-radius: 6px;">Erro ao carregar configurações: ${error.message}</div>`;
+                document.getElementById('configSaveResult').style.display = 'block';
+            }
+        }
+        
+        function renderTPConfig(scoreRange, tps) {
+            const container = document.getElementById(`tp-config-${scoreRange}`);
+            if (!container) return;
+            
+            if (!tps || tps.length === 0) {
+                container.innerHTML = '<div style="color: #6b7280; font-size: 0.9em; padding: 10px;">Nenhum TP configurado</div>';
+                return;
+            }
+            
+            let html = '';
+            tps.forEach((tp, index) => {
+                html += `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; padding: 15px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;">
+                        <div>
+                            <label style="display: block; font-size: 0.85em; color: #1f2937; margin-bottom: 5px;">Múltiplo:</label>
+                            <input type="number" id="tp-${scoreRange}-${index}-multiple" step="0.1" min="1.0" value="${tp.multiple || tp.multiple || 1.5}" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; background: #ffffff; color: #1f2937;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85em; color: #1f2937; margin-bottom: 5px;">% Venda:</label>
+                            <input type="number" id="tp-${scoreRange}-${index}-percent" min="1" max="100" value="${tp.sell_percent || tp.percent || 50}" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; background: #ffffff; color: #1f2937;">
+                        </div>
+                        <button onclick="removeTP('${scoreRange}', ${index})" style="background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.85em;">Remover</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+        
+        function addTP(scoreRange) {
+            // Adiciona novo TP vazio
+            const container = document.getElementById(`tp-config-${scoreRange}`);
+            if (!container) return;
+            
+            const newTP = { multiple: 2.0, sell_percent: 50 };
+            const currentTps = container.querySelectorAll('div[style*="grid-template-columns"]').length;
+            
+                const html = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; padding: 15px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <div>
+                        <label style="display: block; font-size: 0.85em; color: #1f2937; margin-bottom: 5px;">Múltiplo:</label>
+                        <input type="number" id="tp-${scoreRange}-${currentTps}-multiple" step="0.1" min="1.0" value="2.0" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; background: #ffffff; color: #1f2937;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.85em; color: #1f2937; margin-bottom: 5px;">% Venda:</label>
+                        <input type="number" id="tp-${scoreRange}-${currentTps}-percent" min="1" max="100" value="50" style="width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; background: #ffffff; color: #1f2937;">
+                    </div>
+                    <button onclick="removeTP('${scoreRange}', ${currentTps})" style="background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.85em;">Remover</button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+        
+        function removeTP(scoreRange, index) {
+            const container = document.getElementById(`tp-config-${scoreRange}`);
+            if (!container) return;
+            
+            const tpDivs = container.querySelectorAll('div[style*="grid-template-columns"]');
+            if (tpDivs[index]) {
+                tpDivs[index].remove();
+            }
+        }
+        
+        async function saveTradingConfig() {
+            try {
+                // Coleta take profits
+                const takeProfits = {
+                    score_15_17: collectTPs('15-17'),
+                    score_18_19: collectTPs('18-19'),
+                    score_20_21: collectTPs('20-21')
+                };
+                
+                // Coleta stop loss
+                const stopLoss = {
+                    time_minutes: parseInt(document.getElementById('stopLossTime').value) || 5,
+                    min_multiple: parseFloat(document.getElementById('stopLossMinMultiple').value) || 1.0,
+                    percent_drop_enabled: document.getElementById('stopLossPercentEnabled').checked,
+                    percent_drop_threshold: parseFloat(document.getElementById('stopLossPercentThreshold').value) || 20
+                };
+                
+                const response = await fetch('/api/trading-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        take_profits: takeProfits,
+                        stop_loss: stopLoss
+                    })
+                });
+                
+                const result = await response.json();
+                const resultDiv = document.getElementById('configSaveResult');
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<div style="color: #10b981; padding: 10px; background: #d1fae5; border-radius: 6px;">✅ Configurações salvas com sucesso!</div>';
+                    resultDiv.style.display = 'block';
+                    showToast('Configurações salvas! O bot usará essas configurações automaticamente.', 'success');
+                    setTimeout(() => refreshAllTabs(), 500); // Atualiza todas as abas
+                } else {
+                    resultDiv.innerHTML = `<div style="color: #ef4444; padding: 10px; background: #fee; border-radius: 6px;">Erro: ${result.error || 'Erro desconhecido'}</div>`;
+                    resultDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Erro ao salvar configurações:', error);
+                document.getElementById('configSaveResult').innerHTML = 
+                    `<div style="color: #ef4444; padding: 10px; background: #fee; border-radius: 6px;">Erro: ${error.message}</div>`;
+                document.getElementById('configSaveResult').style.display = 'block';
+            }
+        }
+        
+        function collectTPs(scoreRange) {
+            const container = document.getElementById(`tp-config-${scoreRange}`);
+            if (!container) return [];
+            
+            const tps = [];
+            const tpDivs = container.querySelectorAll('div[style*="grid-template-columns"]');
+            
+            tpDivs.forEach((div, index) => {
+                const multipleInput = document.getElementById(`tp-${scoreRange}-${index}-multiple`);
+                const percentInput = document.getElementById(`tp-${scoreRange}-${index}-percent`);
+                
+                if (multipleInput && percentInput) {
+                    tps.push({
+                        multiple: parseFloat(multipleInput.value) || 1.5,
+                        sell_percent: parseInt(percentInput.value) || 50
+                    });
+                }
+            });
+            
+            return tps;
+        }
+        
+        function confirmResetAll() {
+            if (confirm('⚠️ ATENÇÃO!\n\nIsso vai APAGAR TODOS os dados!\n\n• Todos os trades ativos\n• Todo o histórico de trades vendidos\n• Todas as estatísticas\n\nEsta ação NÃO PODE ser desfeita!\n\nTem certeza que deseja continuar?')) {
+                executeResetAll();
+            }
+        }
+        
+        async function executeResetAll() {
+            try {
+                const response = await fetch('/api/reset-all', { method: 'POST' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('✅ Todos os dados resetados!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast('❌ Erro: ' + (data.error || 'Erro desconhecido'), 'error');
+                }
+            } catch (error) {
+                showToast('❌ Erro ao resetar dados', 'error');
+            }
+        }
+        
+        // ===== SUPRIME AVISOS DE EXTENSÕES DO NAVEGADOR =====
+        // Ignora erros de extensões (MetaMask, etc) que tentam injetar window.ethereum
+        const originalError = console.error;
+        console.error = function(...args) {
+            const message = args.join(' ');
+            // Ignora avisos de ethereum de extensões do navegador
+            if (message.includes('ethereum') || message.includes('window.ethereum') || 
+                message.includes('Cannot redefine property: ethereum') ||
+                message.includes('Failed to assign ethereum proxy') ||
+                message.includes('Invalid property descriptor')) {
+                return; // Não mostra esses avisos
+            }
+            originalError.apply(console, args);
+        };
+        
+        // ===== INICIALIZAÇÃO =====
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Remove loading
+            setTimeout(() => {
+                document.getElementById('initialLoader').classList.add('hidden');
+            }, 1000);
+            
+            // Inicia relógio
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Carrega dark mode
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+            }
+            
+            // Carrega dados iniciais
+            await Promise.all([
+                loadBotState(),
+                loadData()
+            ]);
+            
+            // Inicia auto-refresh (a cada 30 segundos)
+            setInterval(loadData, 30000);
+            
+            // Atualiza preços dos trades ativos a cada 60 segundos
+            setInterval(updateActiveTradesPrices, 60000);
+            
+            // Adiciona atalhos de teclado
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'r' && e.ctrlKey) {
+                    e.preventDefault();
+                    loadData();
+                }
+                if (e.key === 'Escape') {
+                    // Fecha modais se houver
+                }
+            });
+        });
+        
+        // ===== VENDA MANUAL =====
+        async function manualSellToken() {
+            const contractAddress = document.getElementById('manualSellTokenCA').value.trim();
+            const sellPercent = parseFloat(document.getElementById('manualSellAmount').value) || 100;
+            const resultDiv = document.getElementById('manualSellResult');
+            
+            // Validações
+            if (!contractAddress) {
+                resultDiv.innerHTML = '<div style="color: #ef4444; padding: 12px; background: #fee2e2; border-radius: 8px;">❌ Por favor, informe o Contract Address do token</div>';
+                return;
+            }
+            
+            if (isNaN(sellPercent) || sellPercent <= 0 || sellPercent > 100) {
+                resultDiv.innerHTML = '<div style="color: #ef4444; padding: 12px; background: #fee2e2; border-radius: 8px;">❌ Por favor, informe uma porcentagem válida (1-100%)</div>';
+                return;
+            }
+            
+            // Busca trade ativo
+            try {
+                resultDiv.innerHTML = '<div style="color: #3b82f6; padding: 12px; background: #dbeafe; border-radius: 8px;">🔍 Buscando token...</div>';
+                
+                const tradesResponse = await fetch('/api/trades/active');
+                const trades = await tradesResponse.json();
+                const trade = trades.find(t => t.contract_address.toLowerCase() === contractAddress.toLowerCase());
+                
+                if (!trade) {
+                    resultDiv.innerHTML = '<div style="color: #ef4444; padding: 12px; background: #fee2e2; border-radius: 8px;">❌ Token não encontrado nos trades ativos. Verifique o Contract Address.</div>';
+                    return;
+                }
+                
+                const currentPrice = trade.current_price || trade.entry_price || 0;
+                const entryPrice = trade.entry_price || 0;
+                const remainingPercent = trade.remaining_percent || 100;
+                
+                // Verifica se há tokens para vender
+                if (remainingPercent <= 0) {
+                    resultDiv.innerHTML = '<div style="color: #ef4444; padding: 12px; background: #fee2e2; border-radius: 8px;">❌ Este token já foi totalmente vendido.</div>';
+                    return;
+                }
+                
+                // Calcula quanto será vendido
+                const actualSellPercent = Math.min(sellPercent, remainingPercent);
+                
+                // Pede confirmação com preço
+                const priceInput = prompt(
+                    `Vender ${trade.symbol || 'token'} manualmente\n\n` +
+                    `Preço de entrada: $${entryPrice.toFixed(8)}\n` +
+                    `Preço atual: $${currentPrice.toFixed(8)}\n` +
+                    `Segurando: ${remainingPercent.toFixed(1)}%\n\n` +
+                    `Vender: ${actualSellPercent.toFixed(1)}%\n\n` +
+                    `Informe o preço de venda (USD):`,
+                    currentPrice.toFixed(8)
+                );
+                
+                if (priceInput === null) {
+                    resultDiv.innerHTML = '<div style="color: #6b7280; padding: 12px; background: #f3f4f6; border-radius: 8px;">ℹ️ Venda cancelada</div>';
+                    return;
+                }
+                
+                const finalPrice = parseFloat(priceInput);
+                
+                if (isNaN(finalPrice) || finalPrice <= 0) {
+                    resultDiv.innerHTML = '<div style="color: #ef4444; padding: 12px; background: #fee2e2; border-radius: 8px;">❌ Preço inválido! Informe um valor numérico maior que zero.</div>';
+                    return;
+                }
+                
+                // Confirmação final
+                const multiple = entryPrice > 0 ? (finalPrice / entryPrice) : 1.0;
+                const profitLoss = entryPrice > 0 ? ((finalPrice / entryPrice - 1) * 100) : 0;
+                
+                const confirmMsg = `Confirmar venda de ${actualSellPercent.toFixed(1)}% de ${trade.symbol || 'token'}?\n\n` +
+                    `Preço de entrada: $${entryPrice.toFixed(8)}\n` +
+                    `Preço de venda: $${finalPrice.toFixed(8)}\n` +
+                    `Múltiplo: ${multiple.toFixed(3)}x\n` +
+                    `Lucro/Perda: ${profitLoss >= 0 ? '+' : ''}${profitLoss.toFixed(2)}%`;
+                
+                if (!confirm(confirmMsg)) {
+                    resultDiv.innerHTML = '<div style="color: #6b7280; padding: 12px; background: #f3f4f6; border-radius: 8px;">ℹ️ Venda cancelada</div>';
+                    return;
+                }
+                
+                // Envia requisição
+                resultDiv.innerHTML = '<div style="color: #3b82f6; padding: 12px; background: #dbeafe; border-radius: 8px;">⏳ Processando venda...</div>';
+                
+                const response = await fetch('/api/trades/mark-sold', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        contract_address: contractAddress,
+                        final_price: finalPrice,
+                        total_sold_percent: actualSellPercent
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const profitText = profitLoss >= 0 ? `Lucro: +${profitLoss.toFixed(2)}%` : `Perda: ${profitLoss.toFixed(2)}%`;
+                    resultDiv.innerHTML = `<div style="color: #10b981; padding: 12px; background: #d1fae5; border-radius: 8px;">✅ Token vendido com sucesso! ${profitText}</div>`;
+                    
+                    // Limpa campos
+                    document.getElementById('manualSellTokenCA').value = '';
+                    document.getElementById('manualSellAmount').value = '';
+                    
+                    // Recarrega TODAS as abas após 1 segundo
+                    setTimeout(() => {
+                        refreshAllTabs(); // Atualiza TODAS as abas
+                        if (actualSellPercent >= remainingPercent) {
+                            switchTab('vendidos');
+                        }
+                    }, 1000);
+                } else {
+                    resultDiv.innerHTML = `<div style="color: #ef4444; padding: 12px; background: #fee2e2; border-radius: 8px;">❌ Erro: ${data.error || 'Erro desconhecido'}</div>`;
+                }
+            } catch (error) {
+                console.error('Erro ao vender token:', error);
+                resultDiv.innerHTML = `<div style="color: #ef4444; padding: 12px; background: #fee2e2; border-radius: 8px;">❌ Erro ao vender token: ${error.message}</div>`;
+            }
+        }
+        
+        // ===== COMPRA MANUAL (se não existir) =====
+        async function manualBuyToken() {
+            const contractAddress = document.getElementById('manualBuyTokenCA').value.trim();
+            const resultDiv = document.getElementById('manualBuyResult');
+            
+            if (!contractAddress) {
+                resultDiv.innerHTML = '<div style="color: #ef4444; padding: 12px; background: #fee2e2; border-radius: 8px;">❌ Por favor, informe o Contract Address do token</div>';
+                return;
+            }
+            
+            try {
+                resultDiv.innerHTML = '<div style="color: #3b82f6; padding: 12px; background: #dbeafe; border-radius: 8px;">⏳ Processando compra...</div>';
+                
+                const response = await fetch('/api/manual-buy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        contract_address: contractAddress
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div style="color: #10b981; padding: 12px; background: #d1fae5; border-radius: 8px;">✅ ${data.message || 'Compra realizada com sucesso!'}</div>`;
+                    document.getElementById('manualBuyTokenCA').value = '';
+                    setTimeout(() => refreshAllTabs(), 1000); // Atualiza TODAS as abas
+                } else {
+                    resultDiv.innerHTML = `<div style="color: #ef4444; padding: 12px; background: #fee2e2; border-radius: 8px;">❌ Erro: ${data.error || 'Erro desconhecido'}</div>`;
+                }
+            } catch (error) {
+                console.error('Erro ao comprar token:', error);
+                resultDiv.innerHTML = `<div style="color: #ef4444; padding: 12px; background: #fee2e2; border-radius: 8px;">❌ Erro ao comprar token: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
+
+
