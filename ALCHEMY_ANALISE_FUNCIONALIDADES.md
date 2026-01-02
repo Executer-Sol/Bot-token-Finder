@@ -1,6 +1,6 @@
 # 🔍 Análise de Funcionalidades Alchemy para o Bot
 
-**API Key:** ``
+**API Key:** `sua api key`
 
 ## 📊 Status Atual das APIs Implementadas
 
