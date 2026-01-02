@@ -43,9 +43,9 @@ MAX_TIME_MINUTES_20_21=1
 ## Formato da Chave Privada
 
 A `SOLANA_PRIVATE_KEY` pode estar em:
-- Base58 (88 caracteres): `5vr6Qtd51emaeg5CxoZm7z2W3huFLY18se2g1cL1LY2ZHFyW4YEQik19CJgpNnVVnZEJfgm9V51LYr31KwpTTgDN`
-- Base64 (44 caracteres)
-- Hex (64 ou 128 caracteres)
+- Base58 (88 caracteres): `[SUA_CHAVE_AQUI]`
+- Base64 (44 caracteres): `[SUA_CHAVE_AQUI]`
+- Hex (64 ou 128 caracteres): `[SUA_CHAVE_AQUI]`
 
 O código detecta automaticamente o formato.
 
